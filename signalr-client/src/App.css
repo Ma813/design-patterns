@@ -1,0 +1,115 @@
+.App {
+  text-align: center;
+}
+
+.App-header {
+  background-color: #282c34;
+  padding: 20px;
+  color: white;
+  min-height: 100vh;
+}
+
+.controls, .room-controls {
+  margin: 20px 0;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.controls input, .room-controls input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  min-width: 150px;
+}
+
+.controls button, .room-controls button {
+  padding: 8px 16px;
+  background-color: #61dafb;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  color: #000;
+  font-weight: bold;
+}
+
+.controls button:disabled, .room-controls button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.action-buttons {
+  margin: 20px 0;
+}
+
+.action-buttons button {
+  margin: 0 5px;
+  padding: 10px 15px;
+  background-color: #4CAF50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.action-buttons button:hover {
+  background-color: #45a049;
+}
+
+.messages-container {
+  margin: 20px auto;
+  max-width: 600px;
+  text-align: left;
+}
+
+.messages {
+  max-height: 300px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  padding: 10px;
+  border-radius: 4px;
+  background-color: #1a1a1a;
+}
+
+.message {
+  margin: 5px 0;
+  padding: 8px;
+  border-radius: 4px;
+}
+
+.message.system {
+  background-color: #ffeb3b;
+  color: #000;
+}
+
+.message.message {
+  background-color: #2196f3;
+}
+
+.timestamp {
+  font-size: 0.8em;
+  color: #888;
+  margin-right: 10px;
+}
+
+.button-presses {
+  margin: 20px auto;
+  max-width: 400px;
+  text-align: left;
+}
+
+.button-press {
+  margin: 5px 0;
+  padding: 8px;
+  background-color: #ff5722;
+  border-radius: 4px;
+}
+
+.connection-status {
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 4px;
+  display: inline-block;
+  font-weight: bold;
+}
