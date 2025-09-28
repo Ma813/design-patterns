@@ -3,7 +3,7 @@ using SignalRServer.Models;
 
 namespace SignalRServer.Hubs
 {
-    public class ChatHub : Hub
+    public class GameHub : Hub
     {
         private static readonly Dictionary<string, string> UserRooms = new Dictionary<string, string>();
         private static readonly Dictionary<string, Game> Games = new Dictionary<string, Game>(); // {roomName: Game}
@@ -53,31 +53,59 @@ namespace SignalRServer.Hubs
             Game game = Games[roomName];
             game.Start();
 
-            Dictionary<string, int> cardAmounts = new Dictionary<string, int>();
-            foreach (PlayerDeck pDeck in game.PlayerDecks)
+            foreach (var player in game.Players)
             {
-                cardAmounts[pDeck.Username] = pDeck.Count;
+                GameForSending gameForSeding = new GameForSending(game, player.Value);
+                
+                await Clients.Client(player.Key).SendAsync("GameStarted", gameForSeding);
+            }
+        }
+
+        public async Task DrawCard(string roomName, string userName)
+        {
+            Game game = Games[roomName];
+            PlayerDeck? playerDeck = game.PlayerDecks.FirstOrDefault(d => d.Username == userName);
+            if (playerDeck == null) return;
+
+            UnoCard newCard = UnoCard.GenerateCard();
+            playerDeck.Cards.Add(newCard);
+            game.NextPlayer();
+            
+            foreach (var player in game.Players)
+            {
+                GameForSending gameForSending = new GameForSending(game, player.Value);
+                await Clients.Client(player.Key).SendAsync("GameStatus", gameForSending);
+            }
+        }
+
+        public async Task PlayCard(string roomName, string userName, UnoCard card)
+        {
+            Game game = Games[roomName];
+            PlayerDeck? playerDeck = game.PlayerDecks.FirstOrDefault(d => d.Username == userName);
+            if (playerDeck == null) return;
+
+            if (game.PlayerDecks[game.currentPlayerIndex].Username != userName)
+            {
+                await Clients.Client(Context.ConnectionId).SendAsync("Error", "It's not your turn.");
+                return; // Not this player's turn
             }
 
-            UnoCard topCard = game.topCard;
+            if (!card.CanPlayOn(game.topCard))
+            {
+                await Clients.Client(Context.ConnectionId).SendAsync("Error", "You cannot play this card.");
+                return; // Invalid move
+            }
+
+            game.topCard = card;
+            playerDeck.Cards.Remove(card);
+
+            game.NextPlayer();
 
             foreach (var player in game.Players)
             {
-                PlayerDeck? deck = game.PlayerDecks.FirstOrDefault(d => d.Username == player.Value);
-                await Clients.Client(player.Key).SendAsync("GameStarted", deck, topCard, cardAmounts);
+                GameForSending gameForSending = new GameForSending(game, player.Value);
+                await Clients.Client(player.Key).SendAsync("GameStatus", gameForSending);
             }
-        }
-
-
-
-        public async Task SendMessage(string roomName, string user, string message)
-        {
-            await Clients.Group(roomName).SendAsync("ReceiveMessage", user, message);
-        }
-
-        public async Task SendButtonPress(string roomName, string user, string buttonName)
-        {
-            await Clients.Group(roomName).SendAsync("ReceiveButtonPress", user, buttonName, DateTime.Now);
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)

@@ -54,3 +54,6 @@
 /Users/matas/dev/design-patterns/SignalRServer/obj/Debug/net8.0/SignalRServer.pdb
 /Users/matas/dev/design-patterns/SignalRServer/obj/Debug/net8.0/SignalRServer.genruntimeconfig.cache
 /Users/matas/dev/design-patterns/SignalRServer/obj/Debug/net8.0/ref/SignalRServer.dll
+/Users/matas/dev/design-patterns/SignalRServer/obj/Debug/net8.0/SignalRServer.sourcelink.json
+/Users/matas/dev/design-patterns/SignalRServer/bin/Debug/net8.0/package-lock.json
+/Users/matas/dev/design-patterns/SignalRServer/bin/Debug/net8.0/package.json
