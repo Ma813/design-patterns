@@ -1,6 +1,6 @@
 namespace SignalRServer.Models
 {
-    public class Game : AbstractGame
+    public class DrawToMatchGame : AbstractGame
     {
         public override void Start()
         {
@@ -15,11 +15,7 @@ namespace SignalRServer.Models
 
         public override void End()
         {
-            IsStarted = false;
-            PlayerDecks.Clear();
-            TopCard = UnoCard.GenerateCard();
-            CurrentPlayerIndex = 0;
-            Direction = 1;
+            // Endless game does not end
         }
 
         public override void DrawCard(string username)
@@ -30,7 +26,8 @@ namespace SignalRServer.Models
                 UnoCard card = UnoCard.GenerateCard();
                 playerDeck.AddCard(card);
             }
-            NextPlayer();
+            // NextPlayer();
+            // In DrawToMatch, the player does not change after drawing a card
         }
 
         public override string PlayCard(string username, UnoCard card)

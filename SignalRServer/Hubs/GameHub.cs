@@ -6,10 +6,11 @@ namespace SignalRServer.Hubs
     public class GameHub : Hub
     {
         private static readonly Dictionary<string, string> UserRooms = new Dictionary<string, string>();
-        private static readonly Dictionary<string, Game> Games = new Dictionary<string, Game>(); // {roomName: Game}
+        private static readonly Dictionary<string, AbstractGame> Games = new Dictionary<string, AbstractGame>(); // {roomName: Game}
 
+        AbstractGameCreator gameFactory = new GameCreator();
 
-        public async Task JoinRoom(string roomName, string userName)
+        public async Task JoinRoom(string roomName, string userName, string gameMode = "Classic")
         {
             var connectionId = Context.ConnectionId;
 
@@ -24,21 +25,21 @@ namespace SignalRServer.Hubs
                 return;
             }
 
-            Game game;
+            AbstractGame game;
             if (Games.ContainsKey(roomName)) game = Games[roomName];
             else
             {
-                game = new Game();
+                game = gameFactory.CreateGame(gameMode);
                 Games[roomName] = game;
             }
 
-            if (game.isStarted)
+            if (game.IsStarted)
             {
                 return; //Should return an errror later on
             }
 
             game.Players[Context.ConnectionId] = userName;
-            
+
             // Add user to new room
             UserRooms[connectionId] = roomName;
             await Groups.AddToGroupAsync(connectionId, roomName);
@@ -50,7 +51,7 @@ namespace SignalRServer.Hubs
 
         public async Task StartGame(string roomName, string userName)
         {
-            Game game = Games[roomName];
+            AbstractGame game = Games[roomName];
             game.Start();
 
             foreach (var player in game.Players)
@@ -63,49 +64,29 @@ namespace SignalRServer.Hubs
 
         public async Task DrawCard(string roomName, string userName)
         {
-            Game game = Games[roomName];
-            PlayerDeck? playerDeck = game.PlayerDecks.FirstOrDefault(d => d.Username == userName);
-            if (playerDeck == null) return;
-
-            UnoCard newCard = UnoCard.GenerateCard();
-            playerDeck.Cards.Add(newCard);
-            game.NextPlayer();
+            AbstractGame game = Games[roomName];
+            game.DrawCard(userName);
             
-            foreach (var player in game.Players)
-            {
-                GameForSending gameForSending = new GameForSending(game, player.Value);
-                await Clients.Client(player.Key).SendAsync("GameStatus", gameForSending);
-            }
+            await notifyPlayers(game);
         }
 
         public async Task PlayCard(string roomName, string userName, UnoCard card)
         {
-            Game game = Games[roomName];
-            PlayerDeck? playerDeck = game.PlayerDecks.FirstOrDefault(d => d.Username == userName);
-            if (playerDeck == null) return;
+            AbstractGame game = Games[roomName];
 
-            if (game.PlayerDecks[game.currentPlayerIndex].Username != userName)
+            string result = game.PlayCard(userName, card);
+            if (result == "WIN")
             {
-                await Clients.Client(Context.ConnectionId).SendAsync("Error", "It's not your turn.");
-                return; // Not this player's turn
+                await Clients.Group(roomName).SendAsync("GameEnded", $"{userName} has won the game!");
+                return;
+            }
+            if (result != "OK")
+            {
+                await Clients.Caller.SendAsync("Error", result);
+                return;
             }
 
-            if (!card.CanPlayOn(game.topCard))
-            {
-                await Clients.Client(Context.ConnectionId).SendAsync("Error", "You cannot play this card.");
-                return; // Invalid move
-            }
-
-            game.topCard = card;
-            playerDeck.Cards.Remove(card);
-
-            game.NextPlayer();
-
-            foreach (var player in game.Players)
-            {
-                GameForSending gameForSending = new GameForSending(game, player.Value);
-                await Clients.Client(player.Key).SendAsync("GameStatus", gameForSending);
-            }
+            await notifyPlayers(game);
         }
 
         public override async Task OnDisconnectedAsync(Exception? exception)
@@ -118,6 +99,15 @@ namespace SignalRServer.Hubs
             }
 
             await base.OnDisconnectedAsync(exception);
+        }
+
+        private async Task notifyPlayers(AbstractGame game)
+        {
+            foreach (var player in game.Players)
+            {
+                GameForSending gameForSending = new GameForSending(game, player.Value);
+                await Clients.Client(player.Key).SendAsync("GameStatus", gameForSending);
+            }
         }
 
         // Add this method to get current connection status

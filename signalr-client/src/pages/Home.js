@@ -5,11 +5,12 @@ import './Home.css';
 function Home() {
     const [userName, setUserName] = useState('');
     const [roomName, setRoomName] = useState('');
+    const [gameMode, setGameMode] = useState("Classic");
     const navigate = useNavigate();
 
     const joinRoom = () => {
         if (roomName) {
-            navigate(`/game/${roomName}`, { state: { userName } });
+            navigate(`/game/${roomName}`, { state: { userName, gameMode } });
         }
     };
 
@@ -38,6 +39,24 @@ function Home() {
                         onChange={(e) => setRoomName(e.target.value)}
                         className="form-input"
                     />
+                </div>
+                <div className="form-group">
+                    <label htmlFor="gameMode" className="form-label">Game Mode</label>
+                    <select
+                        id="gameMode"
+                        className="form-input"
+                        value={gameMode}
+                        onChange={(e) => setGameMode(e.target.value)}
+                    >
+                        <option value="Classic">Classic</option>
+                        <option value="Endless">Endless</option>
+                        <option value="DrawToMatch">Draw to Match</option>
+                    </select>
+                </div>
+                <div>
+                    <label className="note-label" style={{ marginTop: '8px', color: '#888', fontSize: '0.9em', display: 'block' }}>
+                        NOTE: only the first player to join the room can set the game mode. Subsequent players will join with the already selected mode.
+                    </label>
                 </div>
                 <button
                     onClick={joinRoom}

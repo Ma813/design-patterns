@@ -18,7 +18,6 @@ function App() {
     const [playerAmounts, setPlayerAmounts] = useState([]);
     const [currentPlayer, setCurrentPlayer] = useState(null);
     const [error, setError] = useState(null);
-
     const location = useLocation();
 
     useEffect(() => {
@@ -31,7 +30,8 @@ function App() {
 
     useEffect(() => {
         if (roomName && userName) {
-            joinRoom();
+            const gameMode = location.state?.gameMode || "Classic";
+            joinRoom(gameMode);
         }
     }, [roomName, userName]);
 
@@ -70,6 +70,16 @@ function App() {
                 setPlayerAmounts(game.playerAmounts);
                 setTopCard(game.topCard);
                 setCurrentPlayer(game.currentPlayer);
+            });
+
+            newConnection.on("GameEnded", (message) => {
+                console.log('Game ended:', message);
+                alert(`Game ended: ${message}`);
+                setStarted(false);
+                setDeck(null);
+                setPlayerAmounts([]);
+                setTopCard(null);
+                setCurrentPlayer(null);
             });
 
             newConnection.on('UserLeft', (message) => {
@@ -122,7 +132,7 @@ function App() {
         }
     };
 
-    const joinRoom = async () => {
+    const joinRoom = async (gameMode) => {
         let activeConnection = connection;
 
         if (!isConnected) {
@@ -131,7 +141,7 @@ function App() {
 
         if (activeConnection && roomName && userName) {
             try {
-                await activeConnection.invoke('JoinRoom', roomName, userName);
+                await activeConnection.invoke('JoinRoom', roomName, userName, gameMode);
                 setHasJoined(true);
                 console.log('Joined room:', roomName);
             } catch (error) {
@@ -154,7 +164,7 @@ function App() {
 
     async function handleCardPlay(card) {
         console.log("Card clicked:", card);
-        if (connection && started) {
+        if (connection && started && currentPlayer === userName) {
             try {
                 await connection.invoke("PlayCard", roomName, userName, card);
             } catch (error) {
