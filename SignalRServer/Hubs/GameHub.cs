@@ -7,8 +7,8 @@ namespace SignalRServer.Hubs
     {
         private static readonly Dictionary<string, string> UserRooms = new Dictionary<string, string>();
         private static readonly Dictionary<string, Game> Games = new Dictionary<string, Game>(); // {roomName: Game}
-
-
+        private static Logger logger = Logger.GetInstance();
+        
         public async Task JoinRoom(string roomName, string userName)
         {
             var connectionId = Context.ConnectionId;
@@ -38,13 +38,14 @@ namespace SignalRServer.Hubs
             }
 
             game.Players[Context.ConnectionId] = userName;
-            
+
             // Add user to new room
             UserRooms[connectionId] = roomName;
             await Groups.AddToGroupAsync(connectionId, roomName);
 
             // Send only the array of usernames to the group, not the full dictionary
             var usernames = game.Players.Values.ToArray();
+            logger.LogInfo("New player joined");
             await Clients.Group(roomName).SendAsync("UserJoined", usernames);
         }
 

@@ -8,8 +8,10 @@ namespace SignalRServer.Models
         public bool isStarted { get; set; }
         public int currentPlayerIndex { get; set; }
         public int direction { get; set; } // 1 for clockwise, -1 for counter-clockwise
-        // To swap direction, just multiply by -1
+                                           // To swap direction, just multiply by -1
 
+        private static Logger logger = Logger.GetInstance();
+        
         public Game()
         {
             PlayerDecks = new List<PlayerDeck>();
@@ -29,6 +31,7 @@ namespace SignalRServer.Models
                 PlayerDecks.Add(deck);
             }
 
+            logger.LogInfo("New game started!");
         }
 
         public void NextPlayer()
