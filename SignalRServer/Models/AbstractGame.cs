@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
-
+using SignalRServer.Models.CardPlacementStrategies;
 namespace SignalRServer.Models
 {
     public abstract class AbstractGame
@@ -11,6 +11,7 @@ namespace SignalRServer.Models
         public bool IsStarted { get; set; }
         public int CurrentPlayerIndex { get; set; }
         public int Direction { get; set; } // 1 for clockwise, -1 for counter-clockwise
+        protected ICardPlacementStrategy CardPlacementStrategy { get; set; }
 
         protected AbstractGame()
         {
@@ -20,8 +21,12 @@ namespace SignalRServer.Models
             IsStarted = false;
             CurrentPlayerIndex = 0;
             Direction = 1;
+            CardPlacementStrategy = new UnoPlacementStrategy();
         }
-
+        public void SetPlacementStrategy(ICardPlacementStrategy strategy)
+        {
+            CardPlacementStrategy = strategy;
+        }
         public abstract void Start();
         public abstract void End();
         public abstract void DrawCard(string username);

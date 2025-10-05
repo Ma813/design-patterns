@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Models;
-
+using SignalRServer.Models.CardPlacementStrategies;
 namespace SignalRServer.Hubs
 {
     public class GameHub : Hub
@@ -10,7 +10,7 @@ namespace SignalRServer.Hubs
 
         AbstractGameCreator gameFactory = new GameCreator();
 
-        public async Task JoinRoom(string roomName, string userName, string gameMode = "Classic")
+        public async Task JoinRoom(string roomName, string userName, string gameMode = "Classic", string cardPlacementStrategy = "UnoPlacementStrategy")
         {
             var connectionId = Context.ConnectionId;
 
@@ -32,7 +32,19 @@ namespace SignalRServer.Hubs
                 game = gameFactory.CreateGame(gameMode);
                 Games[roomName] = game;
             }
+            Console.WriteLine(cardPlacementStrategy);
+             // 2. Map the string to strategy
+            ICardPlacementStrategy strategy = cardPlacementStrategy switch
+        {
+        "AdjacentNumberPlacementStrategy" => new AdjacentNumberPlacementStrategy(),
+        "ColorOnlyPlacementStrategy" => new ColorOnlyPlacementStrategy(),
+        "NumberOnlyPlacementStrategy" => new NumberOnlyPlacementStrategy(),
+        "UnoPlacementStrategy" => new UnoPlacementStrategy(),
+        _ => new UnoPlacementStrategy() // default
+        };
 
+    // 3. Set strategy on the game
+    game.SetPlacementStrategy(strategy);
             if (game.IsStarted)
             {
                 return; //Should return an errror later on

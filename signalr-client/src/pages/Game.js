@@ -31,6 +31,8 @@ function App() {
     useEffect(() => {
         if (roomName && userName) {
             const gameMode = location.state?.gameMode || "Classic";
+            const placementStrategy = location.state?.placementStrategy || "Uno Standard";
+
             joinRoom(gameMode);
         }
     }, [roomName, userName]);
@@ -132,7 +134,7 @@ function App() {
         }
     };
 
-    const joinRoom = async (gameMode) => {
+    const joinRoom = async (gameMode, placementStrategy) => {
         let activeConnection = connection;
 
         if (!isConnected) {
@@ -141,7 +143,7 @@ function App() {
 
         if (activeConnection && roomName && userName) {
             try {
-                await activeConnection.invoke('JoinRoom', roomName, userName, gameMode);
+                await activeConnection.invoke('JoinRoom', roomName, userName, gameMode, placementStrategy);
                 setHasJoined(true);
                 console.log('Joined room:', roomName);
             } catch (error) {
