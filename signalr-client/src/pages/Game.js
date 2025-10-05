@@ -33,7 +33,7 @@ function App() {
             const gameMode = location.state?.gameMode || "Classic";
             const placementStrategy = location.state?.placementStrategy || "Uno Standard";
 
-            joinRoom(gameMode);
+            joinRoom(gameMode,placementStrategy);
         }
     }, [roomName, userName]);
 

@@ -9,7 +9,7 @@ namespace SignalRServer.Models
         public PlayerDeck(string username)
         {
             Cards = new List<UnoCard>();
-            Username = username; for (int i = 0; i < 1; i++)
+            Username = username; for (int i = 0; i < 7; i++)
             {
                 UnoCard card = UnoCard.GenerateCard();
                 Cards.Add(card);

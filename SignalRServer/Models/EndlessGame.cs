@@ -35,7 +35,7 @@ namespace SignalRServer.Models
 
             if (playerDeck == null) return "Player not found";
             if (playerDeck != PlayerDecks[CurrentPlayerIndex]) return "Not your turn";
-            if (!card.CanPlayOn(TopCard)) return "Card cannot be played on top of current top card";
+            if (!card.CanPlayOn(TopCard,this.CardPlacementStrategy)) return "Card cannot be played on top of current top card";
 
             playerDeck.RemoveCard(card);
             TopCard = card;

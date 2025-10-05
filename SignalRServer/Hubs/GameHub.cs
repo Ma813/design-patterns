@@ -32,19 +32,21 @@ namespace SignalRServer.Hubs
                 game = gameFactory.CreateGame(gameMode);
                 Games[roomName] = game;
             }
-            Console.WriteLine(cardPlacementStrategy);
-             // 2. Map the string to strategy
-            ICardPlacementStrategy strategy = cardPlacementStrategy switch
-        {
-        "AdjacentNumberPlacementStrategy" => new AdjacentNumberPlacementStrategy(),
-        "ColorOnlyPlacementStrategy" => new ColorOnlyPlacementStrategy(),
-        "NumberOnlyPlacementStrategy" => new NumberOnlyPlacementStrategy(),
-        "UnoPlacementStrategy" => new UnoPlacementStrategy(),
-        _ => new UnoPlacementStrategy() // default
-        };
 
-    // 3. Set strategy on the game
-    game.SetPlacementStrategy(strategy);
+
+            ICardPlacementStrategy strategy = cardPlacementStrategy switch
+            {
+                "AdjacentNumberPlacementStrategy" => new AdjacentNumberPlacementStrategy(),
+                "ColorOnlyPlacementStrategy" => new ColorOnlyPlacementStrategy(),
+                "NumberOnlyPlacementStrategy" => new NumberOnlyPlacementStrategy(),
+                "UnoPlacementStrategy" => new UnoPlacementStrategy()
+            };
+
+            //  Set strategy on the game. If this isn't called or compatible, the strategy will be the standard Uno rule
+            game.SetPlacementStrategy(strategy);
+
+
+
             if (game.IsStarted)
             {
                 return; //Should return an errror later on
@@ -69,7 +71,7 @@ namespace SignalRServer.Hubs
             foreach (var player in game.Players)
             {
                 GameForSending gameForSeding = new GameForSending(game, player.Value);
-                
+
                 await Clients.Client(player.Key).SendAsync("GameStarted", gameForSeding);
             }
         }
@@ -78,7 +80,7 @@ namespace SignalRServer.Hubs
         {
             AbstractGame game = Games[roomName];
             game.DrawCard(userName);
-            
+
             await notifyPlayers(game);
         }
 

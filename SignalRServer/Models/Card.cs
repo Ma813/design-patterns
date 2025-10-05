@@ -1,3 +1,5 @@
+using SignalRServer.Models.CardPlacementStrategies;
+
 namespace SignalRServer.Models
 {
     public class UnoCard
@@ -25,9 +27,9 @@ namespace SignalRServer.Models
             return $"{Color} {Digit}";
         }
 
-        public bool CanPlayOn(UnoCard topCard)
+        public bool CanPlayOn(UnoCard topCard, ICardPlacementStrategy cardPlacementStrategy)
         {
-            return this.Color == topCard.Color || this.Digit == topCard.Digit;
+            return cardPlacementStrategy.CanPlaceCard(topCard, this);
         }
 
         public override bool Equals(object? obj)

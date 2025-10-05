@@ -1,0 +1,76 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+### .NET ###
+# Build results
+[Bb]in/
+[Oo]bj/
+
+# VS files
+.vs/
+*.user
+*.suo
+
+# Rider / VS Code
+.idea/
+.vscode/
+
+# NuGet
+*.nupkg
+project.lock.json
+*.nuget.props
+*.nuget.targets
+
+# Logs
+*.log
+*.tlog
+
+# Temp files
+*.tmp
+*.cache
+*.pid
+*.seed
+*.swp
+
+# User-specific
+*.userosscache
+*.userprefs
+
+# Publish output
+wwwroot/dist/
+publish/
+out/
+
+### React / Node ###
+node_modules/
+build/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+
+### Misc ###
+.DS_Store
+Thumbs.db
