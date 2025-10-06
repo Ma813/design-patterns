@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Models;
+using SignalRServer.Helpers;
 
 namespace SignalRServer.Hubs
 {
@@ -28,7 +29,7 @@ namespace SignalRServer.Hubs
             if (Games.ContainsKey(roomName)) game = Games[roomName];
             else
             {
-                game = new Game();
+                game = new Game(GameMode.SameColor);
                 Games[roomName] = game;
             }
 
@@ -67,7 +68,7 @@ namespace SignalRServer.Hubs
             PlayerDeck? playerDeck = game.PlayerDecks.FirstOrDefault(d => d.Username == userName);
             if (playerDeck == null) return;
 
-            UnoCard newCard = UnoCard.GenerateCard();
+            UnoCard newCard = game.GenerateCard();
             playerDeck.Cards.Add(newCard);
             game.NextPlayer();
             

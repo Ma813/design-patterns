@@ -1,3 +1,6 @@
+using SignalRServer.Factories;
+using SignalRServer.Helpers;
+
 namespace SignalRServer.Models
 {
     public class Game
@@ -8,13 +11,15 @@ namespace SignalRServer.Models
         public bool isStarted { get; set; }
         public int currentPlayerIndex { get; set; }
         public int direction { get; set; } // 1 for clockwise, -1 for counter-clockwise
+        private IUnoCardFactory cardFactory;
         // To swap direction, just multiply by -1
 
-        public Game()
+        public Game(GameMode factoryType)
         {
             PlayerDecks = new List<PlayerDeck>();
             Players = new Dictionary<string, string>();
-            topCard = UnoCard.GenerateCard();
+            cardFactory = CardFactoryHelper.GetFactory(factoryType);
+            topCard = cardFactory.GenerateCard();
             isStarted = false;
             currentPlayerIndex = 0;
             direction = 1;
@@ -25,7 +30,7 @@ namespace SignalRServer.Models
             isStarted = true;
             foreach (var player in Players.Values)
             {
-                PlayerDeck deck = new PlayerDeck(player);
+                PlayerDeck deck = new PlayerDeck(player, cardFactory);
                 PlayerDecks.Add(deck);
             }
 
@@ -36,5 +41,9 @@ namespace SignalRServer.Models
             currentPlayerIndex = (currentPlayerIndex + direction + PlayerDecks.Count) % PlayerDecks.Count;
         }
 
+        public UnoCard GenerateCard()
+        {
+            return cardFactory.GenerateCard();
+        }
     }
 }

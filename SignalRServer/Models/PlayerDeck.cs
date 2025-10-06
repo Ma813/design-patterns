@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+using SignalRServer.Factories;
 
 namespace SignalRServer.Models
 {
@@ -6,12 +6,12 @@ namespace SignalRServer.Models
     {
         public List<UnoCard> Cards { get; private set; }
         public string Username { get; private set; }
-        public PlayerDeck(string username)
+        public PlayerDeck(string username, IUnoCardFactory cardFactory)
         {
             Cards = new List<UnoCard>();
             Username = username; for (int i = 0; i < 7; i++)
             {
-                UnoCard card = UnoCard.GenerateCard();
+                UnoCard card = cardFactory.GenerateCard();
                 Cards.Add(card);
             }
         }
