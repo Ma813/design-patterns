@@ -33,7 +33,7 @@ function App() {
             const gameMode = location.state?.gameMode || "Classic";
             const placementStrategy = location.state?.placementStrategy || "Uno Standard";
 
-            joinRoom(gameMode,placementStrategy);
+            joinRoom(gameMode, placementStrategy);
         }
     }, [roomName, userName]);
 
@@ -103,6 +103,14 @@ function App() {
                 setIsConnected(true);
             });
 
+            newConnection.on('Flashbang', () => {
+                alert('Flashbang effect triggered!');
+            });
+            newConnection.on('PlaySound', (file) => {
+                const audio = new Audio(`/sounds/${file}`);
+                console.log("Playing sound:", file);
+                audio.play();
+            });
             newConnection.on('Error', (message) => {
                 setError(message);
             });
@@ -237,12 +245,48 @@ function App() {
                     <div className="player-amounts-container" style={{ margin: '20px 0' }}>
                         <h3>Player Card Amounts:</h3>
                         {Object.entries(playerAmounts).map(([playerName, amount]) => (
-                            <p key={playerName}>
-                                {playerName} {playerName === userName ? "(you)" : ""} has: {amount} cards
-                            </p>
+                            <div key={playerName}>
+                                <p>
+                                    {playerName} {playerName === userName ? "(you)" : ""} has: {amount} cards
+                                </p>
+                                <button onClick={async () => {
+                                    if (connection) {
+                                        try {
+                                            await connection.invoke("AnnoyPlayer", roomName, playerName, "soundeffect");
+                                        } catch (error) {
+                                            console.error("Annoy player failed:", error);
+                                            alert(`Annoy player failed: ${error.message}`);
+                                        }
+                                    }
+                                }}>Send Annoying Sound Effect</button>
+                                <button onClick={async () => {
+                                    if (connection) {
+                                        try {
+                                            await connection.invoke("AnnoyPlayer", roomName, playerName, "flashbang");
+                                        } catch (error) {
+                                            console.error("Annoy player failed:", error);
+                                            alert(`Annoy player failed: ${error.message}`);
+                                        }
+                                    }
+                                }}>Send Annoying Flashbang</button>
+                            </div>
+
                         ))}
                     </div>
                 )}
+
+                <div className="annoy-player-container" style={{ margin: '20px 0' }}>
+                    <button onClick={async () => {
+                        if (connection) {
+                            try {
+                                await connection.invoke("AnnoyPlayers", roomName, "flashbang");
+                            } catch (error) {
+                                console.error("Annoy players failed:", error);
+                                alert(`Annoy players failed: ${error.message}`);
+                            }
+                        }
+                    }}>Annoy All Players with Flashbang</button>
+                </div>
 
                 {topCard && (
                     <div className="top-card-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Models;
 using SignalRServer.Models.CardPlacementStrategies;
@@ -7,6 +8,11 @@ namespace SignalRServer.Hubs
     {
         private static readonly Dictionary<string, string> UserRooms = new Dictionary<string, string>();
         private static readonly Dictionary<string, AbstractGame> Games = new Dictionary<string, AbstractGame>(); // {roomName: Game}
+        
+        private static readonly Dictionary<string, string> UsernameToConnectionId = new Dictionary<string, string>();
+
+        AnnoyingFlashbang annoyingFlashbang = new AnnoyingFlashbang();
+        AnnoyingSoundEffect annoyingSoundEffect = new AnnoyingSoundEffect();
 
         AbstractGameCreator gameFactory = new GameCreator();
 
@@ -32,6 +38,8 @@ namespace SignalRServer.Hubs
                 game = gameFactory.CreateGame(gameMode);
                 Games[roomName] = game;
             }
+
+            UsernameToConnectionId[userName] = connectionId;
 
 
             ICardPlacementStrategy strategy = cardPlacementStrategy switch
@@ -113,6 +121,36 @@ namespace SignalRServer.Hubs
             }
 
             await base.OnDisconnectedAsync(exception);
+        }
+
+        public async Task AnnoyPlayers(string roomName, string message)
+        {
+            IClientProxy playerGroup = Clients.Group(roomName);
+            if (message == "flashbang")
+            {
+                await annoyingFlashbang.AnnoyAll(playerGroup);
+            }
+
+            if (message == "soundeffect")
+            {
+                await annoyingSoundEffect.AnnoyAll(playerGroup);
+            }
+        }
+
+        public async Task AnnoyPlayer(string roomName, string player, string message)
+        {
+            string playerId = UsernameToConnectionId[player];
+            IClientProxy singlePlayer = Clients.Client(playerId);
+            if (message == "flashbang")
+            {
+                await annoyingFlashbang.AnnoyOne(singlePlayer);
+            }
+
+            if (message == "soundeffect")
+            {
+                await annoyingSoundEffect.AnnoyOne(singlePlayer);
+            }
+
         }
 
         private async Task notifyPlayers(AbstractGame game)
