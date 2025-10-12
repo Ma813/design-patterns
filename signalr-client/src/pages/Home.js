@@ -6,11 +6,18 @@ function Home() {
     const [userName, setUserName] = useState('');
     const [roomName, setRoomName] = useState('');
     const [gameMode, setGameMode] = useState("Classic");
+    const [cardGenerationMode, setCardGenerationMode] = useState(0);
     const navigate = useNavigate();
 
     const joinRoom = () => {
         if (roomName) {
-            navigate(`/game/${roomName}`, { state: { userName, gameMode } });
+            navigate(`/game/${roomName}`, { 
+                state: { 
+                    userName, 
+                    gameMode,
+                    cardGenerationMode 
+                } 
+            });
         }
     };
 
@@ -51,6 +58,20 @@ function Home() {
                         <option value="Classic">Classic</option>
                         <option value="Endless">Endless</option>
                         <option value="DrawToMatch">Draw to Match</option>
+                    </select>
+                </div>
+                <div className="form-group">
+                    <label htmlFor="cardGenerationMode" className="form-label">Card Generation mode</label>
+                    <select
+                        id="cardGenerationMode"
+                        className="form-input"
+                        value={cardGenerationMode}
+                        onChange={(e) => setCardGenerationMode(e.target.value)}
+                    >
+                        <option value="0">Standard</option>
+                        <option value="1">All cards are same color</option>
+                        <option value="2">Number cards only</option>
+                        <option value="3">Action cards Only</option>
                     </select>
                 </div>
                 <div>

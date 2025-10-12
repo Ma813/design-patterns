@@ -32,7 +32,8 @@ function App() {
     useEffect(() => {
         if (roomName && userName) {
             const gameMode = location.state?.gameMode || "Classic";
-            joinRoom(gameMode);
+            const cardGenerationMode = location.state?.cardGenerationMode || 0;
+            joinRoom(gameMode, cardGenerationMode);
         }
     }, [roomName, userName]);
 
@@ -133,7 +134,7 @@ function App() {
         }
     };
 
-    const joinRoom = async (gameMode) => {
+    const joinRoom = async (gameMode, cardGenerationMode) => {
         let activeConnection = connection;
 
         if (!isConnected) {
@@ -142,7 +143,7 @@ function App() {
 
         if (activeConnection && roomName && userName) {
             try {
-                await activeConnection.invoke('JoinRoom', roomName, userName, gameMode);
+                await activeConnection.invoke('JoinRoom', roomName, userName, gameMode, cardGenerationMode);
                 setHasJoined(true);
                 console.log('Joined room:', roomName);
             } catch (error) {

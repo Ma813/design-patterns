@@ -2,7 +2,12 @@ using SignalRServer.Helpers;
 
 namespace SignalRServer.Models;
 
-public class Game : AbstractGame { }
+public class Game : AbstractGame
+{
+    public Game(CardGeneratingMode cardGeneratingMode) : base(cardGeneratingMode)
+    {
+    }
+}
 
 public abstract class AbstractGame
 {
@@ -13,19 +18,22 @@ public abstract class AbstractGame
     public int CurrentPlayerIndex { get; set; }
     public int Direction { get; set; } // Describes game direction 1 for clockwise, -1 for counter-clockwise (To swap direction, just multiply by -1)
 
+    protected ICardFactory cardFactory;
+
     protected static readonly Logger logger = Logger.GetInstance();
 
-    protected AbstractGame()
+    protected AbstractGame(CardGeneratingMode cardGeneratingMode)
     {
         PlayerDecks = [];
         Players = [];
 
-        var random = new Random();
-        TopCard = new NumberCard(((Colors)random.Next(0, 5)).ToString(), random.Next(0, 10)); // Initial top card generation
+        cardFactory = CardFactoryCreator.GetFactory(cardGeneratingMode);
+        TopCard = cardFactory.GenerateCard();
 
         IsStarted = false;
         CurrentPlayerIndex = 0;
         Direction = 1;
+
     }
 
     public void Start()
@@ -54,7 +62,7 @@ public abstract class AbstractGame
         if (playerDeck != null)
         {
             var random = new Random();
-            var card = new NumberCard(((Colors)random.Next(0, 5)).ToString(), random.Next(0, 10));
+            var card = cardFactory.GenerateCard();
             playerDeck.AddCard(card);
         }
         NextPlayer();

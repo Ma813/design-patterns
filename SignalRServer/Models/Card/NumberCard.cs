@@ -6,6 +6,7 @@ public class NumberCard : BaseCard
 
     public NumberCard(string color, int number) : base(color, number.ToString())
     {
+        Name = number.ToString();
         Number = number;
     }
 

@@ -23,3 +23,9 @@ public enum Colors
     Blue,
     Yellow
 }
+
+public enum ActionTypes
+{
+    Skip,
+    Reverse
+}
