@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Models;
-using SignalRServer.GameLogic;
 using SignalRServer.Helpers;
 
 namespace SignalRServer.Hubs;
@@ -8,11 +7,12 @@ namespace SignalRServer.Hubs;
 public class GameHub : Hub
 {
     private static readonly Dictionary<string, string> UserRooms = []; // Rooms Dictionary - key is connectionId, value is roomName
-    private static readonly Dictionary<string, Game> Games = []; // Games Dictionary  key is roomName, value is Game object
+    private static readonly Dictionary<string, AbstractGame> Games = []; // Games Dictionary  key is roomName, value is Game object
 
-    private static Logger logger = Logger.GetInstance();
+    readonly AbstractGameCreator gameCreator = new GameCreator();
+    private static readonly Logger logger = Logger.GetInstance();
 
-    public async Task JoinRoom(string roomName, string userName)
+    public async Task JoinRoom(string roomName, string userName, string gameMode = "Classic")
     {
         var connectionId = Context.ConnectionId;
 
@@ -28,18 +28,18 @@ public class GameHub : Hub
             await Groups.RemoveFromGroupAsync(connectionId, room);
         }
 
-        Game game;
-        if (Games.TryGetValue(roomName, out Game? value))
+        AbstractGame game;
+        if (Games.TryGetValue(roomName, out AbstractGame? value))
         {
             game = value;
         }
         else
         {
-            game = new Game();
+            game = gameCreator.CreateGame(gameMode);
             Games[roomName] = game;
         }
 
-        if (game.isStarted)
+        if (game.IsStarted)
         {
             return; // TODO: Should return an error
         }
@@ -72,11 +72,49 @@ public class GameHub : Hub
     }
 
     public async Task StartGame(string roomName)
-        => await GameHandler.StartGame(Games[roomName], Clients);
+    {
+        AbstractGame game = Games[roomName];
+        game.Start();
+
+        foreach (var player in game.Players)
+        {
+            GameDto gameDto = new(game, player.Value);
+            await Clients.Client(player.Key).SendAsync("GameStarted", gameDto);
+        }
+    }
 
     public async Task DrawCard(string roomName, string userName)
-        => await GameHandler.DrawCard(Games[roomName], userName, Clients);
+    {
+        AbstractGame game = Games[roomName];
+        game.DrawCard(userName);
+        await NotifyPlayers(game);
+    }
 
     public async Task PlayCard(string roomName, string userName, BaseCard card)
-        => await GameHandler.PlayCard(Games[roomName], userName, card, Clients, Context);
+    {
+        AbstractGame game = Games[roomName];
+        string result = game.PlayCard(userName, card);
+
+        if (result == "WIN")
+        {
+            await Clients.Group(roomName).SendAsync("GameEnded", $"{userName} has won the game!");
+            return;
+        }
+        if (result != "OK")
+        {
+            await Clients.Caller.SendAsync("Error", result);
+            return;
+        }
+
+        await NotifyPlayers(game);
+    }
+
+    private async Task NotifyPlayers(AbstractGame game)
+    {
+        foreach (var player in game.Players)
+        {
+            GameDto gameForSending = new(game, player.Value);
+            await Clients.Client(player.Key).SendAsync("GameStatus", gameForSending);
+        }
+    }
 }
