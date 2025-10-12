@@ -144,7 +144,7 @@ function App() {
     const startGame = async () => {
         if (connection) {
             try {
-                await connection.invoke("StartGame", roomName, userName);
+                await connection.invoke("StartGame", roomName);
             } catch (error) {
                 console.error("Start game failed:", error);
                 alert(`Start game failed: ${error.message}`);
