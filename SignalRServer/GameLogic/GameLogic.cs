@@ -1,10 +1,13 @@
 ﻿using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Models;
+using SignalRServer.Helpers;
 
 namespace SignalRServer.GameLogic;
 
 public static class GameHandler
 {
+    private static Logger logger = Logger.GetInstance();
+
     public static async Task StartGame(Game game, IHubCallerClients Clients)
     {
         game.Start();
@@ -13,6 +16,8 @@ public static class GameHandler
             GameDto gameForSeding = new(game, player.Value);
             await Clients.Client(player.Key).SendAsync("GameStarted", gameForSeding);
         }
+
+        logger.LogInfo($"Game started with players: {string.Join(", ", game.Players.Values)}");
     }
 
     public static async Task DrawCard(Game game, string userName, IHubCallerClients Clients)
@@ -30,6 +35,8 @@ public static class GameHandler
             GameDto gameForSending = new(game, player.Value);
             await Clients.Client(player.Key).SendAsync("GameStatus", gameForSending);
         }
+
+        logger.LogInfo($"{userName} drew a card ({newCard.Color} {newCard.Name}).");
     }
 
     public static async Task PlayCard(Game game, string userName, BaseCard card, IHubCallerClients Clients, HubCallerContext context)
@@ -59,5 +66,7 @@ public static class GameHandler
             GameDto gameForSending = new(game, player.Value);
             await Clients.Client(player.Key).SendAsync("GameStatus", gameForSending);
         }
+
+        logger.LogInfo($"{userName} played a {card.Color} {card.Name} card.");
     }
 }

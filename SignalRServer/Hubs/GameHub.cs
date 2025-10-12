@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Models;
 using SignalRServer.GameLogic;
+using SignalRServer.Helpers;
 
 namespace SignalRServer.Hubs;
 
@@ -8,6 +9,8 @@ public class GameHub : Hub
 {
     private static readonly Dictionary<string, string> UserRooms = []; // Rooms Dictionary - key is connectionId, value is roomName
     private static readonly Dictionary<string, Game> Games = []; // Games Dictionary  key is roomName, value is Game object
+
+    private static Logger logger = Logger.GetInstance();
 
     public async Task JoinRoom(string roomName, string userName)
     {
@@ -50,6 +53,8 @@ public class GameHub : Hub
         // Send only the array of usernames to the group, not the full dictionary
         var usernames = game.Players.Values.ToArray();
         await Clients.Group(roomName).SendAsync("UserJoined", usernames);
+
+        logger.LogInfo($"{userName} joined room {roomName} (connectionId: {connectionId})");
     }
 
     public override async Task OnDisconnectedAsync(Exception? exception)
@@ -62,6 +67,8 @@ public class GameHub : Hub
         }
 
         await base.OnDisconnectedAsync(exception);
+
+        logger.LogInfo($"Connection {connectionId} disconnected");
     }
 
     public async Task StartGame(string roomName)
