@@ -19,6 +19,8 @@ function App() {
     const [currentPlayer, setCurrentPlayer] = useState(null);
     const [error, setError] = useState(null);
 
+    const [playedRedCount, setPlayedRedCount] = useState(null);
+
     const location = useLocation();
 
     useEffect(() => {
@@ -57,6 +59,9 @@ function App() {
                 setPlayerAmounts(game.playerAmounts);
                 setCurrentPlayer(game.currentPlayer);
                 setError(null); // Clear previous errors
+
+                setPlayedRedCount(game.redCardCount);
+
                 console.log("Game status updated:", game);
             });
 
@@ -281,6 +286,12 @@ function App() {
                     <div className="deck-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         <h3>Deck:</h3>
                         <Deck deck={deck} onCardPlay={handleCardPlay} />
+                    </div>
+                )}
+
+                {playedRedCount && (
+                    <div>
+                        <p>{playedRedCount}</p>
                     </div>
                 )}
             </header>

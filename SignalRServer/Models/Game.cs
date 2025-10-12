@@ -1,6 +1,6 @@
 namespace SignalRServer.Models
 {
-    public class Game
+    public class Game : ISubject
     {
         public List<PlayerDeck> PlayerDecks { get; set; }
         public Dictionary<string, string> Players { get; set; } // {connectionId: username}

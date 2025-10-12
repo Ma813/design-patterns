@@ -1,3 +1,4 @@
+using System.Threading.Tasks.Dataflow;
 using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Models;
 
@@ -53,6 +54,10 @@ namespace SignalRServer.Hubs
             Game game = Games[roomName];
             game.Start();
 
+            CardCountUpdater ccu = new CardCountUpdater();
+            game.Add(ccu);
+            ccu.SetSubject(game);
+
             foreach (var player in game.Players)
             {
                 GameForSending gameForSeding = new GameForSending(game, player.Value);
@@ -70,7 +75,9 @@ namespace SignalRServer.Hubs
             UnoCard newCard = UnoCard.GenerateCard();
             playerDeck.Cards.Add(newCard);
             game.NextPlayer();
-            
+
+            game.Broadcast(Action.draw, newCard, playerDeck);
+
             foreach (var player in game.Players)
             {
                 GameForSending gameForSending = new GameForSending(game, player.Value);
@@ -98,6 +105,8 @@ namespace SignalRServer.Hubs
 
             game.topCard = card;
             playerDeck.Cards.Remove(card);
+
+            game.Broadcast(Action.place, card, playerDeck);
 
             game.NextPlayer();
 

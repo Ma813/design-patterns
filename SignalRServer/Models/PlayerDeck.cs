@@ -6,6 +6,9 @@ namespace SignalRServer.Models
     {
         public List<UnoCard> Cards { get; private set; }
         public string Username { get; private set; }
+
+        public int redCardCount;
+
         public PlayerDeck(string username)
         {
             Cards = new List<UnoCard>();
@@ -14,6 +17,8 @@ namespace SignalRServer.Models
                 UnoCard card = UnoCard.GenerateCard();
                 Cards.Add(card);
             }
+
+            redCardCount = 0;
         }
 
         public void AddCard(UnoCard card)
