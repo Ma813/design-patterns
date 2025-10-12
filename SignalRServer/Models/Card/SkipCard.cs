@@ -4,9 +4,9 @@ public class SkipCard : BaseCard
 {
     public SkipCard(string color) : base(color, "Skip") { }
 
-    public override void Play()
+    public override void Play(AbstractGame game)
     {
-        Console.WriteLine($"{Color} Skip card played. Next player is skipped!");
+        game.NextPlayer();
     }
 
     public override bool CanPlay(BaseCard card)

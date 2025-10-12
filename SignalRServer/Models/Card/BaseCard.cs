@@ -11,7 +11,7 @@ public abstract class BaseCard
         Name = name;
     }
 
-    public abstract void Play();
+    public abstract void Play(AbstractGame game);
 
     public abstract bool CanPlay(BaseCard card);
 }

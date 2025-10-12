@@ -81,6 +81,7 @@ public abstract class AbstractGame
         logger.LogInfo($"{username} played {card.Color + ' ' + card.Name} on top of {TopCard.Color + ' ' + TopCard.Name}");
 
         playerDeck.RemoveCard(card);
+        card.Play(this);
         TopCard = card;
         if (playerDeck.Count == 0)
         {
@@ -91,7 +92,7 @@ public abstract class AbstractGame
         return "OK";
     }
 
-    protected void NextPlayer()
+    public void NextPlayer()
     {
         CurrentPlayerIndex = (CurrentPlayerIndex + Direction + PlayerDecks.Count) % PlayerDecks.Count;
     }

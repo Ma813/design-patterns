@@ -10,7 +10,7 @@ public class NumberCard : BaseCard
         Number = number;
     }
 
-    public override void Play()
+    public override void Play(AbstractGame game)
     {
         Console.WriteLine($"{Color} {Number} card played.");
     }

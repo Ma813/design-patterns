@@ -4,9 +4,9 @@ public class ReverseCard : BaseCard
 {
     public ReverseCard(string color) : base(color, "Reverse") { }
 
-    public override void Play()
+    public override void Play(AbstractGame game)
     {
-        Console.WriteLine($"{Color} Reverse card played. Direction of play is reversed!");
+        game.Direction *= -1; // Flip direction of play
     }
 
     public override bool CanPlay(BaseCard card)
