@@ -1,126 +1,138 @@
 using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Models;
+using SignalRServer.Helpers;
 
-namespace SignalRServer.Hubs
+namespace SignalRServer.Hubs;
+
+public class GameHub : Hub
 {
-    public class GameHub : Hub
+    private static readonly Dictionary<string, string> UserRooms = []; // Rooms Dictionary - key is connectionId, value is roomName
+    private static readonly Dictionary<string, AbstractGame> Games = []; // Games Dictionary  key is roomName, value is Game object
+
+    readonly AbstractGameCreator gameCreator = new GameCreator();
+    private static readonly Logger logger = Logger.GetInstance();
+
+    public async Task JoinRoom(string roomName, string userName,
+        GameType gameMode = GameType.Classic,
+        CardGeneratingMode cardGeneratingMode = CardGeneratingMode.Normal,
+        StrategyType cardPlacementStrategy = StrategyType.Normal)
     {
-        private static readonly Dictionary<string, string> UserRooms = new Dictionary<string, string>();
-        private static readonly Dictionary<string, Game> Games = new Dictionary<string, Game>(); // {roomName: Game}
+        var connectionId = Context.ConnectionId;
 
-
-        public async Task JoinRoom(string roomName, string userName)
+        // Player is in the provided room
+        if (UserRooms.TryGetValue(connectionId, out string? room) && room == roomName)
         {
-            var connectionId = Context.ConnectionId;
-
-            // Remove user from previous room if any
-            if (UserRooms.ContainsKey(connectionId))
-            {
-                await Groups.RemoveFromGroupAsync(connectionId, UserRooms[connectionId]);
-            }
-
-            if (UserRooms.ContainsKey(connectionId) && UserRooms[connectionId] == roomName) //player is already in room
-            {
-                return;
-            }
-
-            Game game;
-            if (Games.ContainsKey(roomName)) game = Games[roomName];
-            else
-            {
-                game = new Game();
-                Games[roomName] = game;
-            }
-
-            if (game.isStarted)
-            {
-                return; //Should return an errror later on
-            }
-
-            game.Players[Context.ConnectionId] = userName;
-            
-            // Add user to new room
-            UserRooms[connectionId] = roomName;
-            await Groups.AddToGroupAsync(connectionId, roomName);
-
-            // Send only the array of usernames to the group, not the full dictionary
-            var usernames = game.Players.Values.ToArray();
-            await Clients.Group(roomName).SendAsync("UserJoined", usernames);
+            return;
         }
 
-        public async Task StartGame(string roomName, string userName)
+        // Remove user from other rooms
+        if (UserRooms.TryGetValue(connectionId, out room))
         {
-            Game game = Games[roomName];
-            game.Start();
-
-            foreach (var player in game.Players)
-            {
-                GameForSending gameForSeding = new GameForSending(game, player.Value);
-                
-                await Clients.Client(player.Key).SendAsync("GameStarted", gameForSeding);
-            }
+            await Groups.RemoveFromGroupAsync(connectionId, room);
         }
 
-        public async Task DrawCard(string roomName, string userName)
+        AbstractGame game;
+        if (Games.TryGetValue(roomName, out AbstractGame? value))
         {
-            Game game = Games[roomName];
-            PlayerDeck? playerDeck = game.PlayerDecks.FirstOrDefault(d => d.Username == userName);
-            if (playerDeck == null) return;
-
-            UnoCard newCard = UnoCard.GenerateCard();
-            playerDeck.Cards.Add(newCard);
-            game.NextPlayer();
-            
-            foreach (var player in game.Players)
-            {
-                GameForSending gameForSending = new GameForSending(game, player.Value);
-                await Clients.Client(player.Key).SendAsync("GameStatus", gameForSending);
-            }
+            game = value;
+        }
+        else
+        {
+            game = gameCreator.CreateGame(gameMode, cardGeneratingMode, cardPlacementStrategy);
+            Games[roomName] = game;
         }
 
-        public async Task PlayCard(string roomName, string userName, UnoCard card)
+        if (game.IsStarted)
         {
-            Game game = Games[roomName];
-            PlayerDeck? playerDeck = game.PlayerDecks.FirstOrDefault(d => d.Username == userName);
-            if (playerDeck == null) return;
-
-            if (game.PlayerDecks[game.currentPlayerIndex].Username != userName)
-            {
-                await Clients.Client(Context.ConnectionId).SendAsync("Error", "It's not your turn.");
-                return; // Not this player's turn
-            }
-
-            if (!card.CanPlayOn(game.topCard))
-            {
-                await Clients.Client(Context.ConnectionId).SendAsync("Error", "You cannot play this card.");
-                return; // Invalid move
-            }
-
-            game.topCard = card;
-            playerDeck.Cards.Remove(card);
-
-            game.NextPlayer();
-
-            foreach (var player in game.Players)
-            {
-                GameForSending gameForSending = new GameForSending(game, player.Value);
-                await Clients.Client(player.Key).SendAsync("GameStatus", gameForSending);
-            }
+            return; // TODO: Should return an error
         }
 
-        public override async Task OnDisconnectedAsync(Exception? exception)
-        {
-            var connectionId = Context.ConnectionId;
-            if (UserRooms.TryGetValue(connectionId, out var roomName))
-            {
-                await Clients.Group(roomName).SendAsync("UserLeft", $"{connectionId} left the room");
-                UserRooms.Remove(connectionId);
-            }
+        game.Players[Context.ConnectionId] = userName;
 
-            await base.OnDisconnectedAsync(exception);
+        // Add user to new room
+        UserRooms[connectionId] = roomName;
+        await Groups.AddToGroupAsync(connectionId, roomName);
+
+        // Send only the array of usernames to the group, not the full dictionary
+        var usernames = game.Players.Values.ToArray();
+        await Clients.Group(roomName).SendAsync("UserJoined", usernames);
+
+        logger.LogInfo($"{userName} joined room {roomName} (connectionId: {connectionId})");
+    }
+
+    public override async Task OnDisconnectedAsync(Exception? exception)
+    {
+        var connectionId = Context.ConnectionId;
+        if (UserRooms.TryGetValue(connectionId, out var roomName))
+        {
+            await Clients.Group(roomName).SendAsync("UserLeft", $"{connectionId} left the room");
+            UserRooms.Remove(connectionId);
         }
 
-        // Add this method to get current connection status
-        public string GetConnectionId() => Context.ConnectionId;
+        await base.OnDisconnectedAsync(exception);
+
+        logger.LogInfo($"Connection {connectionId} disconnected");
+    }
+
+    public async Task StartGame(string roomName)
+    {
+        AbstractGame game = Games[roomName];
+        game.Start();
+
+        foreach (var player in game.Players)
+        {
+            GameDto gameDto = new(game, player.Value);
+            await Clients.Client(player.Key).SendAsync("GameStarted", gameDto);
+        }
+    }
+
+    public async Task DrawCard(string roomName, string userName)
+    {
+        AbstractGame game = Games[roomName];
+        game.DrawCard(userName);
+        await NotifyPlayers(game);
+    }
+
+    public async Task PlayCard(string roomName, string userName, CardDto cardDto)
+    {
+        var game = Games[roomName];
+        BaseCard card;
+        if (int.TryParse(cardDto.Name, out int number))
+        {
+            card = new NumberCard(cardDto.Color, number);
+        }
+        else
+        {
+            card = cardDto.Name switch
+            {
+                "Reverse" => new ReverseCard(cardDto.Color),
+                "Skip" => new SkipCard(cardDto.Color),
+                _ => throw new InvalidOperationException($"Unknown card type: {cardDto.Name}"),
+            };
+        }
+
+        string result = game.PlayCard(userName, card);
+
+        if (result == "WIN")
+        {
+            await Clients.Group(roomName).SendAsync("GameEnded", $"{userName} has won the game!");
+            return;
+        }
+        if (result != "OK")
+        {
+            await Clients.Caller.SendAsync("Error", result);
+            return;
+        }
+
+        await NotifyPlayers(game);
+    }
+
+    private async Task NotifyPlayers(AbstractGame game)
+    {
+        foreach (var player in game.Players)
+        {
+            GameDto gameForSending = new(game, player.Value);
+            await Clients.Client(player.Key).SendAsync("GameStatus", gameForSending);
+        }
     }
 }

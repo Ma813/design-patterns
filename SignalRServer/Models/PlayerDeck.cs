@@ -1,31 +1,33 @@
-using System.Collections.Generic;
+namespace SignalRServer.Models;
 
-namespace SignalRServer.Models
+public class PlayerDeck
 {
-    public class PlayerDeck
-    {
-        public List<UnoCard> Cards { get; private set; }
-        public string Username { get; private set; }
-        public PlayerDeck(string username)
-        {
-            Cards = new List<UnoCard>();
-            Username = username; for (int i = 0; i < 7; i++)
-            {
-                UnoCard card = UnoCard.GenerateCard();
-                Cards.Add(card);
-            }
-        }
+    public string Username { get; private set; }
+    public List<BaseCard> Cards { get; private set; }
 
-        public void AddCard(UnoCard card)
+    public PlayerDeck(string username)
+    {
+        Cards = [];
+        Username = username;
+
+        var random = new Random();
+        for (int i = 0; i < 7; i++)
         {
+            BaseCard card = new NumberCard(((Colors)random.Next(0, 5)).ToString(), random.Next(0, 10));
             Cards.Add(card);
         }
-
-        public bool RemoveCard(UnoCard card)
-        {
-            return Cards.Remove(card);
-        }
-
-        public int Count => Cards.Count;
     }
+
+    public void AddCard(BaseCard card)
+    {
+        Cards.Add(card);
+    }
+
+    public bool RemoveCard(BaseCard card)
+    {
+        BaseCard cardToDelete = Cards.FirstOrDefault(c => card.Color == c.Color && card.Name == c.Name);
+        return Cards.Remove(cardToDelete);
+    }
+
+    public int Count => Cards.Count;
 }
