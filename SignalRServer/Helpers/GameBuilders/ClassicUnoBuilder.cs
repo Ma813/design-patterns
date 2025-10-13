@@ -21,13 +21,13 @@ public class ClassicUnoBuilder : IGameBuilder
 
     public void BuildCardFactory()
     {
-        _game.cardFactory = CardFactoryType.Normal;
+        _game.cardFactory = CardFactoryCreator.GetFactory(CardFactoryType.Normal);
         _game.TopCard = _game.cardFactory.GenerateCard();
     }
 
     public void BuildPlacementStrategy()
     {
-        _game.cardPlacementStrategy = StrategyType.Normal;
+        _game.cardPlacementStrategy = StrategyCreator.GetStrategy(StrategyType.Normal);
     }
 
     public void BuildInitialState()

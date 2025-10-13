@@ -21,13 +21,13 @@ public class AdjacentNumberEndlessBuilder : IGameBuilder
 
     public void BuildCardFactory()
     {
-        _game.cardFactory = CardFactoryType.SameColor;
+        _game.cardFactory = CardFactoryCreator.GetFactory(CardFactoryType.SameColor);
         _game.TopCard = _game.cardFactory.GenerateCard();
     }
 
     public void BuildPlacementStrategy()
     {
-        _game.cardPlacementStrategy = StrategyType.AdjacentNumber;
+        _game.cardPlacementStrategy = StrategyCreator.GetStrategy(StrategyType.AdjacentNumber);
     }
 
     public void BuildInitialState()
