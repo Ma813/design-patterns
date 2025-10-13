@@ -1,15 +1,18 @@
 using SignalRServer.Models;
-using System.Collections.Generic;
 
 namespace SignalRServer.Builders;
 
 public class GameDirector
 {
-    public AbstractGame Construct(IGameBuilder builder, Dictionary<string, string> players)
+    public AbstractGame Construct(
+        IGameBuilder builder)
     {
-        builder.BuildGame();
-        builder.SetupPlayers(players);
-        builder.SetupInitialState();
+        builder.CreateNewGame()
+       .BuildPlayerCollections()
+       .BuildCardFactory()
+       .BuildPlacementStrategy()
+       .BuildInitialState();
+
         return builder.GetResult();
     }
 }
