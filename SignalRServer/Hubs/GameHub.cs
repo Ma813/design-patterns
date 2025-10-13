@@ -13,7 +13,7 @@ public class GameHub : Hub
     private static readonly Logger logger = Logger.GetInstance();
 
     public async Task JoinRoom(string roomName, string userName,
-        string gameMode = "Classic",
+        GameType gameMode = GameType.Classic,
         CardGeneratingMode cardGeneratingMode = CardGeneratingMode.Normal,
         StrategyType cardPlacementStrategy = StrategyType.Normal)
     {
@@ -93,9 +93,24 @@ public class GameHub : Hub
         await NotifyPlayers(game);
     }
 
-    public async Task PlayCard(string roomName, string userName, BaseCard card)
+    public async Task PlayCard(string roomName, string userName, CardDto cardDto)
     {
-        AbstractGame game = Games[roomName];
+        var game = Games[roomName];
+        BaseCard card;
+        if (int.TryParse(cardDto.Name, out int number))
+        {
+            card = new NumberCard(cardDto.Color, number);
+        }
+        else
+        {
+            card = cardDto.Name switch
+            {
+                "Reverse" => new ReverseCard(cardDto.Color),
+                "Skip" => new SkipCard(cardDto.Color),
+                _ => throw new InvalidOperationException($"Unknown card type: {cardDto.Name}"),
+            };
+        }
+
         string result = game.PlayCard(userName, card);
 
         if (result == "WIN")

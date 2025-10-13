@@ -25,7 +25,8 @@ public class PlayerDeck
 
     public bool RemoveCard(BaseCard card)
     {
-        return Cards.Remove(card);
+        BaseCard cardToDelete = Cards.FirstOrDefault(c => card.Color == c.Color && card.Name == c.Name);
+        return Cards.Remove(cardToDelete);
     }
 
     public int Count => Cards.Count;

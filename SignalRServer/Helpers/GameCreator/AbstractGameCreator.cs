@@ -2,10 +2,17 @@ using SignalRServer.Models;
 
 namespace SignalRServer.Helpers;
 
+public enum GameType
+{
+    Classic,
+    Endless,
+    DrawToMatch
+}
+
 public abstract class AbstractGameCreator
 {
     public abstract AbstractGame CreateGame(
-        string gameMode = "Classic",
+        GameType gameMode = GameType.Classic,
         CardGeneratingMode cardGeneratingMode = CardGeneratingMode.Normal,
         StrategyType cardPlacementStrategy = StrategyType.Normal);
 }

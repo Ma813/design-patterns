@@ -8,12 +8,12 @@ public class CardFactory : ICardFactory
 
     public BaseCard GenerateCard()
     {
-        Colors color = (Colors)random.Next(0, 5);
+        Colors color = (Colors)random.Next(0, Enum.GetValues(typeof(Colors)).Length);
         bool isAction = Convert.ToBoolean(random.Next(0, 2));
 
         if (isAction)
         {
-            ActionTypes action = (ActionTypes)random.Next(0, 3);
+            ActionTypes action = (ActionTypes)random.Next(0, Enum.GetValues(typeof(ActionTypes)).Length);
             return action switch
             {
                 ActionTypes.Skip => new SkipCard(color.ToString()),

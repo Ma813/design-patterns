@@ -66,7 +66,7 @@ public abstract class AbstractGame
     public virtual void DrawCard(string username)
     {
         var playerDeck = PlayerDecks.FirstOrDefault(pd => pd.Username == username);
-        if (playerDeck != null)
+        if (playerDeck != default)
         {
             var random = new Random();
             var card = cardFactory.GenerateCard();
@@ -78,12 +78,11 @@ public abstract class AbstractGame
 
     public string PlayCard(string username, BaseCard card)
     {
-        CurrentPlayerIndex = (CurrentPlayerIndex + Direction + PlayerDecks.Count) % PlayerDecks.Count;
         var playerDeck = PlayerDecks.FirstOrDefault(pd => pd.Username == username);
 
-        if (playerDeck == null) return "Player not found";
-        if (playerDeck != PlayerDecks[CurrentPlayerIndex]) return "Not your turn";
-        if (!card.CanPlay(TopCard)) return "Card cannot be played on top of current top card";
+        if (playerDeck == default) return "Player not found";
+        if (playerDeck.Username != PlayerDecks[CurrentPlayerIndex].Username) return "Not your turn";
+        if (!card.CanPlay(TopCard, cardPlacementStrategy)) return "Card cannot be played on top of current top card";
 
         logger.LogInfo($"{username} played {card.Color + ' ' + card.Name} on top of {TopCard.Color + ' ' + TopCard.Name}");
 

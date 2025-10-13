@@ -5,7 +5,7 @@ import "./Home.css";
 function Home() {
   const [userName, setUserName] = useState("");
   const [roomName, setRoomName] = useState("");
-  const [gameMode, setGameMode] = useState("Classic");
+  const [gameMode, setGameMode] = useState(0);
   const [cardGenerationMode, setCardGenerationMode] = useState(0);
   const [placementStrategy, setPlacementStrategy] = useState(0);
 
@@ -64,9 +64,9 @@ function Home() {
             value={gameMode}
             onChange={(e) => setGameMode(e.target.value)}
           >
-            <option value="Classic">Classic</option>
-            <option value="Endless">Endless</option>
-            <option value="DrawToMatch">Draw to Match</option>
+            <option value="0">Classic</option>
+            <option value="1">Endless</option>
+            <option value="2">Draw to Match</option>
           </select>
         </div>
         <div className="form-group">
@@ -80,9 +80,9 @@ function Home() {
             onChange={(e) => setCardGenerationMode(e.target.value)}
           >
             <option value="0">Standard</option>
-            <option value="1">All cards are same color</option>
-            <option value="2">Number cards only</option>
-            <option value="3">Action cards Only</option>
+            <option value="1">All cards are the same color</option>
+            <option value="2">Generate only number cards</option>
+            <option value="3">Generate only action cards</option>
           </select>
         </div>
         <div className="form-group">

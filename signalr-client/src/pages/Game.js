@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import "./Game.css";
 import * as signalR from "@microsoft/signalr";
 import Deck from "../components/Deck";
 import Card from "../components/Card";
+import "./Game.css";
 
 function App() {
   const [connection, setConnection] = useState(null);
@@ -21,6 +21,22 @@ function App() {
 
   const location = useLocation();
 
+  function normalizeCard(card) {
+    if (!card) return null;
+    return {
+      Color: card.Color || card.color || "gray",
+      Name: card.Name || card.name || "?",
+    };
+  }
+
+  function normalizeDeck(deck) {
+    if (!deck) return null;
+    return {
+      username: deck.Username || deck.username,
+      cards: (deck.Cards || deck.cards || []).map(normalizeCard),
+    };
+  }
+
   useEffect(() => {
     const urlParts = window.location.pathname.split("/");
     const room = urlParts[urlParts.length - 1];
@@ -32,7 +48,7 @@ function App() {
 
   useEffect(() => {
     if (roomName && userName) {
-      const gameMode = location.state?.gameMode || "Classic";
+      const gameMode = location.state?.gameMode || 0;
       const cardGenerationMode = location.state?.cardGenerationMode || 0;
       const placementStrategy = location.state?.placementStrategy || 0;
       joinRoom(gameMode, cardGenerationMode, placementStrategy);
@@ -50,33 +66,29 @@ function App() {
 
       const newConnection = new signalR.HubConnectionBuilder()
         .withUrl("http://localhost:5000/gameHub", {
-          skipNegotiation: true, // Important for CORS
+          skipNegotiation: true,
           transport: signalR.HttpTransportType.WebSockets,
         })
         .withAutomaticReconnect()
-        .configureLogging(signalR.LogLevel.Information) // Add logging
+        .configureLogging(signalR.LogLevel.Information)
         .build();
 
-      // Set up event handlers
-
       newConnection.on("GameStatus", (game) => {
-        setDeck(game.playerDeck);
-        setTopCard(game.topCard);
+        setDeck(normalizeDeck(game.playerDeck));
+        setTopCard(normalizeCard(game.topCard));
         setPlayerAmounts(game.playerAmounts);
         setCurrentPlayer(game.currentPlayer);
-        setError(null); // Clear previous errors
+        setError(null);
         console.log("Game status updated:", game);
       });
 
-      newConnection.on("UserJoined", (players) => {
-        setPlayers(players);
-      });
+      newConnection.on("UserJoined", (players) => setPlayers(players));
 
       newConnection.on("GameStarted", (game) => {
         setStarted(true);
-        setDeck(game.playerDeck);
+        setDeck(normalizeDeck(game.playerDeck));
+        setTopCard(normalizeCard(game.topCard));
         setPlayerAmounts(game.playerAmounts);
-        setTopCard(game.topCard);
         setCurrentPlayer(game.currentPlayer);
       });
 
@@ -113,7 +125,6 @@ function App() {
         setError(message);
       });
 
-      // Start connection
       await newConnection.start();
       setConnection(newConnection);
       setIsConnected(true);
@@ -122,7 +133,6 @@ function App() {
         "Connected successfully! Connection ID:",
         newConnection.connectionId
       );
-
       return newConnection;
     } catch (error) {
       console.error("Connection failed:", error);
@@ -130,24 +140,11 @@ function App() {
     }
   };
 
-  const disconnectFromHub = async () => {
-    if (connection) {
-      try {
-        await connection.stop();
-        setConnection(null);
-        setIsConnected(false);
-        console.log("Disconnected successfully");
-      } catch (error) {
-        console.error("Disconnect failed:", error);
-      }
-    }
-  };
-
   const joinRoom = async (gameMode, cardGenerationMode, placementStrategy) => {
     let activeConnection = connection;
 
     if (!isConnected) {
-      activeConnection = await connectToHub(); // get actual connection
+      activeConnection = await connectToHub();
     }
 
     if (activeConnection && roomName && userName) {
@@ -164,7 +161,6 @@ function App() {
         console.log("Joined room:", roomName);
       } catch (error) {
         console.error("Join room failed:", error);
-        alert(`Join room failed: ${error.message}`);
       }
     }
   };
@@ -175,7 +171,6 @@ function App() {
         await connection.invoke("StartGame", roomName);
       } catch (error) {
         console.error("Start game failed:", error);
-        alert(`Start game failed: ${error.message}`);
       }
     }
   };
@@ -187,24 +182,20 @@ function App() {
         await connection.invoke("PlayCard", roomName, userName, card);
       } catch (error) {
         console.error("Play card failed:", error);
-        alert(`Play card failed: ${error.message}`);
       }
     }
   }
 
-  // Cleanup on component unmount
   useEffect(() => {
     return () => {
-      if (connection) {
-        connection.stop();
-      }
+      if (connection) connection.stop();
     };
   }, [connection]);
 
   return (
     <div className="Game">
       <header className="Game-header">
-        <h1>Dos game room</h1>
+        <h1>DOS Game Room</h1>
 
         {hasJoined && !started && (
           <div className="start-game-controls">
@@ -250,6 +241,7 @@ function App() {
             ))}
           </div>
         )}
+
         {started && playerAmounts && Object.keys(playerAmounts).length > 0 && (
           <div
             className="player-amounts-container"
