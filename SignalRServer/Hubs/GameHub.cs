@@ -12,7 +12,10 @@ public class GameHub : Hub
     readonly AbstractGameCreator gameCreator = new GameCreator();
     private static readonly Logger logger = Logger.GetInstance();
 
-    public async Task JoinRoom(string roomName, string userName, string gameMode = "Classic", CardGeneratingMode cardGeneratingMode = CardGeneratingMode.Normal)
+    public async Task JoinRoom(string roomName, string userName,
+        string gameMode = "Classic",
+        CardGeneratingMode cardGeneratingMode = CardGeneratingMode.Normal,
+        StrategyType cardPlacementStrategy = StrategyType.Normal)
     {
         var connectionId = Context.ConnectionId;
 
@@ -35,7 +38,7 @@ public class GameHub : Hub
         }
         else
         {
-            game = gameCreator.CreateGame(gameMode, cardGeneratingMode);
+            game = gameCreator.CreateGame(gameMode, cardGeneratingMode, cardPlacementStrategy);
             Games[roomName] = game;
         }
 

@@ -4,7 +4,7 @@ namespace SignalRServer.Models;
 
 public class Game : AbstractGame
 {
-    public Game(CardGeneratingMode cardGeneratingMode) : base(cardGeneratingMode)
+    public Game(CardGeneratingMode cardGeneratingMode, StrategyType placementStrategy) : base(cardGeneratingMode, placementStrategy)
     {
     }
 }
@@ -18,11 +18,12 @@ public abstract class AbstractGame
     public int CurrentPlayerIndex { get; set; }
     public int Direction { get; set; } // Describes game direction 1 for clockwise, -1 for counter-clockwise (To swap direction, just multiply by -1)
 
+    protected ICardPlacementStrategy cardPlacementStrategy { get; set; }
     protected ICardFactory cardFactory;
 
     protected static readonly Logger logger = Logger.GetInstance();
 
-    protected AbstractGame(CardGeneratingMode cardGeneratingMode)
+    protected AbstractGame(CardGeneratingMode cardGeneratingMode, StrategyType placementStrategy)
     {
         PlayerDecks = [];
         Players = [];
@@ -30,10 +31,16 @@ public abstract class AbstractGame
         cardFactory = CardFactoryCreator.GetFactory(cardGeneratingMode);
         TopCard = cardFactory.GenerateCard();
 
+        cardPlacementStrategy = StrategyCreator.GetStrategy(placementStrategy);
+
         IsStarted = false;
         CurrentPlayerIndex = 0;
         Direction = 1;
+    }
 
+    public void SetPlacementStrategy(ICardPlacementStrategy strategy)
+    {
+        cardPlacementStrategy = strategy;
     }
 
     public void Start()

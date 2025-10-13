@@ -4,5 +4,8 @@ namespace SignalRServer.Helpers;
 
 public abstract class AbstractGameCreator
 {
-    public abstract AbstractGame CreateGame(string gameMode = "Classic", CardGeneratingMode cardGeneratingMode = CardGeneratingMode.Normal);
+    public abstract AbstractGame CreateGame(
+        string gameMode = "Classic",
+        CardGeneratingMode cardGeneratingMode = CardGeneratingMode.Normal,
+        StrategyType cardPlacementStrategy = StrategyType.Normal);
 }

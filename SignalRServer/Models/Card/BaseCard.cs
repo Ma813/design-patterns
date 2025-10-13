@@ -1,3 +1,5 @@
+using SignalRServer.Helpers;
+
 namespace SignalRServer.Models;
 
 public abstract class BaseCard
@@ -13,7 +15,10 @@ public abstract class BaseCard
 
     public abstract void Play(AbstractGame game);
 
-    public abstract bool CanPlay(BaseCard card);
+    public bool CanPlay(BaseCard card, ICardPlacementStrategy cardPlacementStrategy)
+    {
+        return cardPlacementStrategy.CanPlaceCard(card, this);
+    }
 }
 
 public enum Colors

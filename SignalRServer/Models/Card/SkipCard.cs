@@ -8,9 +8,4 @@ public class SkipCard : BaseCard
     {
         game.NextPlayer();
     }
-
-    public override bool CanPlay(BaseCard card)
-    {
-        return Color == card.Color || card is SkipCard;
-    }
 }

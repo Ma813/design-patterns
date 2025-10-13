@@ -14,9 +14,4 @@ public class NumberCard : BaseCard
     {
         Console.WriteLine($"{Color} {Number} card played.");
     }
-
-    public override bool CanPlay(BaseCard card)
-    {
-        return Color == card.Color || Number.ToString() == card.Name;
-    }
 }

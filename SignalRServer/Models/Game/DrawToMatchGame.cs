@@ -4,7 +4,7 @@ namespace SignalRServer.Models;
 
 public class DrawToMatchGame : AbstractGame
 {
-    public DrawToMatchGame(CardGeneratingMode cardGeneratingMode) : base(cardGeneratingMode)
+    public DrawToMatchGame(CardGeneratingMode cardGeneratingMode, StrategyType placementStrategy) : base(cardGeneratingMode, placementStrategy)
     {
     }
 

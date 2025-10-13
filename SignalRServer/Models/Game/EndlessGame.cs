@@ -4,7 +4,7 @@ namespace SignalRServer.Models;
 
 public class EndlessGame : AbstractGame
 {
-    public EndlessGame(CardGeneratingMode cardGeneratingMode) : base(cardGeneratingMode)
+    public EndlessGame(CardGeneratingMode cardGeneratingMode, StrategyType placementStrategy) : base(cardGeneratingMode, placementStrategy)
     {
     }
 

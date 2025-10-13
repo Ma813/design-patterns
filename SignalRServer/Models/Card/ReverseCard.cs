@@ -8,9 +8,4 @@ public class ReverseCard : BaseCard
     {
         game.Direction *= -1; // Flip direction of play
     }
-
-    public override bool CanPlay(BaseCard card)
-    {
-        return Color == card.Color || card is ReverseCard;
-    }
 }
