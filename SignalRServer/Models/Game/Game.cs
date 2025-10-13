@@ -24,7 +24,7 @@ public abstract class AbstractGame
     protected static readonly Logger logger = Logger.GetInstance();
 
     protected AbstractGame(CardGeneratingMode cardGeneratingMode, StrategyType placementStrategy)
-    {
+    {   
         PlayerDecks = [];
         Players = [];
 
@@ -83,7 +83,7 @@ public abstract class AbstractGame
 
         if (playerDeck == null) return "Player not found";
         if (playerDeck != PlayerDecks[CurrentPlayerIndex]) return "Not your turn";
-        if (!card.CanPlay(TopCard)) return "Card cannot be played on top of current top card";
+        if (!card.CanPlay(TopCard, cardPlacementStrategy)) return "Card cannot be played on top of current top card";
 
         logger.LogInfo($"{username} played {card.Color + ' ' + card.Name} on top of {TopCard.Color + ' ' + TopCard.Name}");
 
