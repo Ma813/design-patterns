@@ -18,6 +18,7 @@ function App() {
     const [playerAmounts, setPlayerAmounts] = useState([]);
     const [currentPlayer, setCurrentPlayer] = useState(null);
     const [error, setError] = useState(null);
+    const [actionMade, setActionMade] = useState(false);
 
     const location = useLocation();
 
@@ -154,15 +155,43 @@ function App() {
 
     async function handleCardPlay(card) {
         console.log("Card clicked:", card);
-        if (connection && started) {
+        if (connection && started && !actionMade) {
             try {
                 await connection.invoke("PlayCard", roomName, userName, card);
+                setActionMade(true);
             } catch (error) {
                 console.error("Play card failed:", error);
                 alert(`Play card failed: ${error.message}`);
             }
         }
     }
+
+    async function handleUndoCommand() {
+        if(connection && started) {
+            try {
+                await connection.invoke("UndoCard", roomName, userName);
+                setActionMade(false);
+            } catch (error) {
+                console.error("Undo card failed:", error);
+                alert(`Undo card failed: ${error.message}`);
+            }
+        }
+    }
+
+    // handle undo command and passing to next player
+    useEffect(() => {
+        let timer = null;
+        if(actionMade){
+           timer = setTimeout(() => {
+                connection.invoke("NextPlayer", roomName);
+                setActionMade(false);
+            }, 3000);
+        }
+
+        return () => {
+            clearTimeout(timer)
+        };
+    }, [actionMade]);
 
     // Cleanup on component unmount
     useEffect(() => {
@@ -244,13 +273,14 @@ function App() {
                     </div>
                 )}
 
-                {started && currentPlayer === userName && (
+                {started && currentPlayer === userName && !actionMade && (
                     <div className="draw-card-controls" style={{ margin: '20px 0' }}>
                         <button
                             onClick={async () => {
                                 if (connection) {
                                     try {
                                         await connection.invoke("DrawCard", roomName, userName);
+                                        setActionMade(true);
                                     } catch (error) {
                                         console.error("Draw card failed:", error);
                                         alert(`Draw card failed: ${error.message}`);
@@ -281,6 +311,12 @@ function App() {
                     <div className="deck-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         <h3>Deck:</h3>
                         <Deck deck={deck} onCardPlay={handleCardPlay} />
+                    </div>
+                )}
+
+                {started && currentPlayer === userName && actionMade && (
+                    <div>
+                        <button onClick={handleUndoCommand}>Undo</button>
                     </div>
                 )}
             </header>

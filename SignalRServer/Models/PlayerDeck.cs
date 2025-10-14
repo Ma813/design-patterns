@@ -6,6 +6,9 @@ namespace SignalRServer.Models
     {
         public List<UnoCard> Cards { get; private set; }
         public string Username { get; private set; }
+
+        public CommandHistory history = new CommandHistory(); 
+
         public PlayerDeck(string username)
         {
             Cards = new List<UnoCard>();
@@ -27,5 +30,23 @@ namespace SignalRServer.Models
         }
 
         public int Count => Cards.Count;
+
+        public void ExecuteCommand(Command command)
+        {
+            if (command.Execute())
+            {
+                history.Push(command);
+            }
+        }
+
+        // Take the most recent command from history and run its undo method
+        public void Undo()
+        {
+            Command command = history.Pop();
+            if (command != null)
+            {
+                command.Undo();
+            }
+        }
     }
 }

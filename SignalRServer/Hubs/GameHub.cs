@@ -67,10 +67,8 @@ namespace SignalRServer.Hubs
             PlayerDeck? playerDeck = game.PlayerDecks.FirstOrDefault(d => d.Username == userName);
             if (playerDeck == null) return;
 
-            UnoCard newCard = UnoCard.GenerateCard();
-            playerDeck.Cards.Add(newCard);
-            game.NextPlayer();
-            
+            playerDeck.ExecuteCommand(new DrawCardCommand(game, playerDeck));
+
             foreach (var player in game.Players)
             {
                 GameForSending gameForSending = new GameForSending(game, player.Value);
@@ -83,22 +81,46 @@ namespace SignalRServer.Hubs
             Game game = Games[roomName];
             PlayerDeck? playerDeck = game.PlayerDecks.FirstOrDefault(d => d.Username == userName);
             if (playerDeck == null) return;
-
+            
             if (game.PlayerDecks[game.currentPlayerIndex].Username != userName)
             {
                 await Clients.Client(Context.ConnectionId).SendAsync("Error", "It's not your turn.");
-                return; // Not this player's turn
+                return;
             }
 
             if (!card.CanPlayOn(game.topCard))
             {
                 await Clients.Client(Context.ConnectionId).SendAsync("Error", "You cannot play this card.");
-                return; // Invalid move
+                return;
             }
 
-            game.topCard = card;
-            playerDeck.Cards.Remove(card);
+            playerDeck.ExecuteCommand(new PlayCardCommand(game, playerDeck, card));
 
+            foreach (var player in game.Players)
+            {
+                GameForSending gameForSending = new GameForSending(game, player.Value);
+                await Clients.Client(player.Key).SendAsync("GameStatus", gameForSending);
+            }
+        }
+
+        public async Task UndoCard(string roomName, string userName)
+        {
+            Game game = Games[roomName];
+            PlayerDeck? playerDeck = game.PlayerDecks.FirstOrDefault(d => d.Username == userName);
+            if (playerDeck == null) return;
+
+            playerDeck.ExecuteCommand(new UndoCardCommand(game, playerDeck));
+
+            foreach (var player in game.Players)
+            {
+                GameForSending gameForSending = new GameForSending(game, player.Value);
+                await Clients.Client(player.Key).SendAsync("GameStatus", gameForSending);
+            }
+        }
+
+        public async Task NextPlayer(string roomName)
+        {
+            Game game = Games[roomName];
             game.NextPlayer();
 
             foreach (var player in game.Players)
