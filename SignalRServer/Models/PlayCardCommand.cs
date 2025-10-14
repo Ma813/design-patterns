@@ -7,7 +7,7 @@ public class PlayCardCommand : Command
     public PlayCardCommand(Game game, PlayerDeck pd, UnoCard card) : base(game, pd)
     {
         this.card = card;
-    } 
+    }
 
     public override bool Execute()
     {
@@ -27,5 +27,10 @@ public class PlayCardCommand : Command
         pd.Cards.Remove(card);
 
         return true;
+    }
+
+    public override string ToString()
+    {
+        return string.Format("Played card - {0}", card.ToString());
     }   
 }

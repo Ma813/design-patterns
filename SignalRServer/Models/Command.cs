@@ -31,5 +31,7 @@ public abstract class Command
         game.topCard = new UnoCard(topCardBackup.Color, topCardBackup.Digit);
     }
 
+    public abstract override string ToString();
+
     public abstract bool Execute();
 }

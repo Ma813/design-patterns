@@ -1,6 +1,6 @@
 public class CommandHistory
 {
-    private Stack<Command> history = new Stack<Command>();
+    public Stack<Command> history = new Stack<Command>();
 
     public void Push(Command command)
     {

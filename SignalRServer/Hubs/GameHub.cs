@@ -85,13 +85,13 @@ namespace SignalRServer.Hubs
             if (game.PlayerDecks[game.currentPlayerIndex].Username != userName)
             {
                 await Clients.Client(Context.ConnectionId).SendAsync("Error", "It's not your turn.");
-                return;
+                throw new HubException("It's not your turn.");
             }
 
             if (!card.CanPlayOn(game.topCard))
             {
                 await Clients.Client(Context.ConnectionId).SendAsync("Error", "You cannot play this card.");
-                return;
+                throw new HubException("You cannot play this card.");
             }
 
             playerDeck.ExecuteCommand(new PlayCardCommand(game, playerDeck, card));

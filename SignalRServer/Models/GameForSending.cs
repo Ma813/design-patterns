@@ -8,6 +8,8 @@ namespace SignalRServer.Models
         public int direction { get; set; }
         public PlayerDeck? PlayerDeck { get; set; } // The deck of the player requesting the game state
 
+        public List<string> commandHistory { get; set; } = new List<string>();
+
         public GameForSending(Game game, string userName)
         {
             PlayerAmounts = new Dictionary<string, int>();
@@ -19,6 +21,11 @@ namespace SignalRServer.Models
             currentPlayer = game.PlayerDecks[game.currentPlayerIndex].Username;
             direction = game.direction;
             PlayerDeck = game.PlayerDecks.FirstOrDefault(pd => pd.Username == userName);
+            
+            foreach(Command cmd in PlayerDeck.history.history)
+            {
+                commandHistory.Add(cmd.ToString());
+            }
         }
     }
 }

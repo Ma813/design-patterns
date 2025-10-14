@@ -19,6 +19,7 @@ function App() {
     const [currentPlayer, setCurrentPlayer] = useState(null);
     const [error, setError] = useState(null);
     const [actionMade, setActionMade] = useState(false);
+    const [commandHistory, setCommandHistory] = useState([]);
 
     const location = useLocation();
 
@@ -58,6 +59,7 @@ function App() {
                 setPlayerAmounts(game.playerAmounts);
                 setCurrentPlayer(game.currentPlayer);
                 setError(null); // Clear previous errors
+                setCommandHistory(game.commandHistory);
                 console.log("Game status updated:", game);
             });
 
@@ -161,7 +163,6 @@ function App() {
                 setActionMade(true);
             } catch (error) {
                 console.error("Play card failed:", error);
-                alert(`Play card failed: ${error.message}`);
             }
         }
     }
@@ -318,6 +319,14 @@ function App() {
                     <div>
                         <button onClick={handleUndoCommand}>Undo</button>
                     </div>
+                )}
+
+                {commandHistory && (
+                    Object.entries(commandHistory).map((cmd) => (
+                            <p>
+                                {cmd}
+                            </p>
+                    ))
                 )}
             </header>
         </div>
