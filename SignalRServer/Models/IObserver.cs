@@ -8,7 +8,7 @@ public enum Action
 
 public interface IObserver
 {
-    void Update(Action a, UnoCard c, PlayerDeck pd);
+    void Update(Action a, UnoCard c);
     public ISubject GetSubject();
     public void SetSubject(ISubject subject);
 }

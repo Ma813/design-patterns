@@ -19,7 +19,7 @@ function App() {
     const [currentPlayer, setCurrentPlayer] = useState(null);
     const [error, setError] = useState(null);
 
-    const [playedRedCount, setPlayedRedCount] = useState(null);
+    const [cardCount, setCardCount] = useState([]);
 
     const location = useLocation();
 
@@ -60,7 +60,7 @@ function App() {
                 setCurrentPlayer(game.currentPlayer);
                 setError(null); // Clear previous errors
 
-                setPlayedRedCount(game.redCardCount);
+                setCardCount(game.cardCount);
 
                 console.log("Game status updated:", game);
             });
@@ -75,6 +75,7 @@ function App() {
                 setPlayerAmounts(game.playerAmounts);
                 setTopCard(game.topCard);
                 setCurrentPlayer(game.currentPlayer);
+                setCardCount(game.cardCount)
             });
 
             newConnection.on('UserLeft', (message) => {
@@ -289,9 +290,14 @@ function App() {
                     </div>
                 )}
 
-                {playedRedCount && (
-                    <div>
-                        <p>{playedRedCount}</p>
+                {started && cardCount && Object.keys(cardCount).length > 0 && (
+                    <div className="placed-card-count-container" style={{ margin: '20px 0', position: "absolute" }}>
+                        <h3>Placed Card Count:</h3>
+                        {Object.entries(cardCount).map(([cardType, amount]) => (
+                            <p key={cardType}>
+                                {cardType} placed {amount} times
+                            </p>
+                        ))}
                     </div>
                 )}
             </header>

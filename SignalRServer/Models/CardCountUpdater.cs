@@ -1,13 +1,28 @@
+using System.Security.Cryptography.X509Certificates;
 using SignalRServer.Models;
 
 public class CardCountUpdater : IObserver
 {
-    ISubject subject = null!;
+    Game subject = null!;
 
-    public void Update(Action a, UnoCard c, PlayerDeck pd)
+    private Dictionary<string, int> cardCount;
+
+    public CardCountUpdater()
     {
-        Console.WriteLine("Player {0} {1} card with {2} and {3} number", a, pd.Username, c.Color, c.Digit);
-        if(a == Action.place && c.Color == "red") pd.redCardCount++;
+        cardCount = new Dictionary<string, int>();
+    }
+
+    public void Update(Action a, UnoCard c)
+    {
+        if (a == Action.draw) return;
+
+        if (cardCount.ContainsKey(c.Color)) cardCount[c.Color]++;
+        else cardCount[c.Color] = 1;
+
+        if (cardCount.ContainsKey(c.Digit.ToString())) cardCount[c.Digit.ToString()]++;
+        else cardCount[c.Digit.ToString()] = 1;
+
+        subject.SetCardCount(cardCount);
     }
     public ISubject GetSubject()
     {
@@ -15,6 +30,6 @@ public class CardCountUpdater : IObserver
     }
     public void SetSubject(ISubject subject)
     {
-        this.subject = subject;
+        this.subject = (Game)subject;
     }
 }

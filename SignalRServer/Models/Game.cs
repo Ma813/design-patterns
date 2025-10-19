@@ -10,6 +10,8 @@ namespace SignalRServer.Models
         public int direction { get; set; } // 1 for clockwise, -1 for counter-clockwise
         // To swap direction, just multiply by -1
 
+        public Dictionary<string, int> placedCardCount { get; set; }
+
         public Game()
         {
             PlayerDecks = new List<PlayerDeck>();
@@ -18,6 +20,9 @@ namespace SignalRServer.Models
             isStarted = false;
             currentPlayerIndex = 0;
             direction = 1;
+            placedCardCount = new Dictionary<string, int>();
+
+            AttachObservers();
         }
 
         public void Start()
@@ -34,6 +39,16 @@ namespace SignalRServer.Models
         public void NextPlayer()
         {
             currentPlayerIndex = (currentPlayerIndex + direction + PlayerDecks.Count) % PlayerDecks.Count;
+        }
+
+        public void AttachObservers()
+        {
+            base.Add(new CardCountUpdater());
+        }
+
+        public void SetCardCount(Dictionary<string, int> cardCount)
+        {
+            this.placedCardCount = cardCount;
         }
 
     }

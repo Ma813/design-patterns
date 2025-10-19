@@ -15,8 +15,8 @@ public abstract class ISubject
 		observers.Remove(o);
 	}
 	
-	public void Broadcast(Action a, UnoCard c, PlayerDeck pd)
+	public void NotifyAll(Action a, UnoCard c)
 	{
-		foreach (var o in observers) o.Update(a, c, pd);
+		foreach (var o in observers) o.Update(a, c);
 	}
 }
