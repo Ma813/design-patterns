@@ -259,6 +259,18 @@ function App() {
                                         }
                                     }
                                 }}>Send Annoying Sound Effect</button>
+                                {/* Mute player (so they can't annoy you with sound effect) */}
+                                <button onClick={async () => {
+                                    if (connection) {
+                                        try {
+                                            await connection.invoke("ToggleMutePlayer", roomName, playerName);
+                                        } catch (error) {
+                                            console.error("Toggle mute player failed:", error);
+                                            alert(`Toggle mute player failed: ${error.message}`);
+                                        }
+                                    }
+                                }}>Toggle Mute</button>
+
                                 <button onClick={async () => {
                                     if (connection) {
                                         try {

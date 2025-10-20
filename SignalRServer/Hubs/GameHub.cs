@@ -11,8 +11,11 @@ namespace SignalRServer.Hubs
         
         private static readonly Dictionary<string, string> UsernameToConnectionId = new Dictionary<string, string>();
 
-        AnnoyingFlashbang annoyingFlashbang = new AnnoyingFlashbang();
-        AnnoyingSoundEffect annoyingSoundEffect = new AnnoyingSoundEffect();
+        IAnnoyingEffects annoyingFlashbang = new AnnoyingFlashbang();
+        IAnnoyingEffects annoyingSoundEffect = new AnnoyingSoundEffect();
+
+
+        SoundEffectAdaptee annoyingSoundAdaptee = new SoundEffectAdaptee();
 
         AbstractGameCreator gameFactory = new GameCreator();
 
@@ -126,31 +129,52 @@ namespace SignalRServer.Hubs
         public async Task AnnoyPlayers(string roomName, string message)
         {
             IClientProxy playerGroup = Clients.Group(roomName);
-            if (message == "flashbang")
+
+            IAnnoyingEffects annoyingEffect;
+
+            switch (message)
             {
-                await annoyingFlashbang.AnnoyAll(playerGroup);
+                case "flashbang":
+                    annoyingEffect = annoyingFlashbang;
+                    break;
+                case "soundeffect":
+                    annoyingEffect = annoyingSoundEffect;
+                    break;
+                default:
+                    return;
             }
 
-            if (message == "soundeffect")
-            {
-                await annoyingSoundEffect.AnnoyAll(playerGroup);
-            }
+            await annoyingEffect.Annoy(playerGroup, Clients.Caller);
         }
 
         public async Task AnnoyPlayer(string roomName, string player, string message)
         {
             string playerId = UsernameToConnectionId[player];
             IClientProxy singlePlayer = Clients.Client(playerId);
-            if (message == "flashbang")
+            
+            IAnnoyingEffects annoyingEffect;
+
+            switch (message)
             {
-                await annoyingFlashbang.AnnoyOne(singlePlayer);
+                case "flashbang":
+                    annoyingEffect = annoyingFlashbang;
+                    break;
+                case "soundeffect":
+                    annoyingEffect = annoyingSoundEffect;
+                    break;
+                default:
+                    return;
             }
 
-            if (message == "soundeffect")
-            {
-                await annoyingSoundEffect.AnnoyOne(singlePlayer);
-            }
+            await annoyingEffect.Annoy(singlePlayer, Clients.Caller);
+        }
 
+        public async Task ToggleMutePlayer(string roomname, string player)
+        {
+            string playerId = UsernameToConnectionId[player];
+            IClientProxy muted = Clients.Client(playerId);
+            IClientProxy muting = Clients.Caller;
+            await annoyingSoundAdaptee.ToggleMutePlayer(muted, muting);
         }
 
         private async Task notifyPlayers(AbstractGame game)
