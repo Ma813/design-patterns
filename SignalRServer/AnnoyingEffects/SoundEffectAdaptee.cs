@@ -9,22 +9,21 @@ public class SoundEffectAdaptee
 
     public async Task SendSoundEffect(IClientProxy player, IClientProxy caller, string playerUsername, string callerUsername)
     {
-        if (mutedPlayers.ContainsKey(playerUsername) && mutedPlayers[playerUsername].Contains(callerUsername))
+        System.Console.WriteLine();
+        if (mutedPlayers.ContainsKey(callerUsername) && mutedPlayers[callerUsername].Contains(playerUsername))
         {
             // Player is muted, do not send sound effect
-            System.Console.WriteLine($"{caller} tried to annoy muted user {player} with sound effect, but they are muted.");
+            System.Console.WriteLine($"{callerUsername} tried to annoy muted user {playerUsername} with sound effect, but they are muted.");
             return;
         }
 
         await player.SendAsync("PlaySound", "annoying.mp3");
         // Placeholder implementation
-        System.Console.WriteLine($"{caller} is annoying user {player} with sound effect!");
+        System.Console.WriteLine($"{callerUsername} is annoying user {playerUsername} with sound effect!");
     }
 
     public async Task ToggleMutePlayer(string mutedPlayer, string mutingPlayer)
     {
-        System.Console.WriteLine($"Current muted players: {System.Text.Json.JsonSerializer.Serialize(mutedPlayers)}");
-
         if (!mutedPlayers.ContainsKey(mutedPlayer))
         {
             mutedPlayers[mutedPlayer] = new List<string>();
@@ -40,6 +39,9 @@ public class SoundEffectAdaptee
             mutedPlayers[mutedPlayer].Add(mutingPlayer);
             System.Console.WriteLine($"{mutingPlayer} has muted {mutedPlayer}.");
         }
+
+        System.Console.WriteLine($"Current muted players: {System.Text.Json.JsonSerializer.Serialize(mutedPlayers)}");
+
 
         await Task.CompletedTask;
     }

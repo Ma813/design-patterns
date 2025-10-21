@@ -148,7 +148,17 @@ namespace SignalRServer.Hubs
                     return;
             }
 
-            await annoyingEffect.Annoy(playerGroup, Clients.Caller);
+            Dictionary<string, IClientProxy> players = new Dictionary<string, IClientProxy>();
+            foreach (var player in UsernameToConnectionId)
+            {
+                if (UserRooms.TryGetValue(player.Value, out var playerRoom) && playerRoom == roomName)
+                {
+                    players[player.Key] = Clients.Client(player.Value);
+                }
+            }
+
+            string callerUsername = UsernameToConnectionId.FirstOrDefault(x => x.Value == Context.ConnectionId).Key;
+            await annoyingEffect.AnnoyAll(players, Clients.Caller, callerUsername: callerUsername);
         }
 
         public async Task AnnoyPlayer(string roomName, string player, string message)
@@ -170,7 +180,9 @@ namespace SignalRServer.Hubs
                     return;
             }
 
-            await annoyingEffect.Annoy(singlePlayer, Clients.Caller);
+            string callerUsername = UsernameToConnectionId.FirstOrDefault(x => x.Value == Context.ConnectionId).Key;
+
+            await annoyingEffect.Annoy(singlePlayer, Clients.Caller, player, callerUsername);
         }
 
         public async Task ToggleMutePlayer(string roomname, string player)

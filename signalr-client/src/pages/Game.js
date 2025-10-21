@@ -4,6 +4,7 @@ import './Game.css';
 import * as signalR from '@microsoft/signalr';
 import Deck from '../components/Deck';
 import Card from '../components/Card'
+import PlayerCardInfo from '../components/PlayerInfoCard';
 
 function App() {
     const [connection, setConnection] = useState(null);
@@ -228,6 +229,22 @@ function App() {
                     </div>
                 )}
 
+                {started && playerAmounts && Object.keys(playerAmounts).length > 0 && (
+                    <div className="player-amounts-container" style={{ margin: '20px 0' }}>
+                        <h3>Player Card Amounts:</h3>
+                        {Object.entries(playerAmounts).map(([playerName, amount]) => (
+                            <PlayerCardInfo
+                                key={playerName}
+                                playerName={playerName}
+                                amount={amount}
+                                isYou={playerName === userName}
+                                connection={connection}
+                                roomName={roomName}
+                            />
+                        ))}
+                    </div>
+                )}
+
 
 
                 {players && !started && (
@@ -241,63 +258,66 @@ function App() {
                         ))}
                     </div>
                 )}
-                {started && playerAmounts && Object.keys(playerAmounts).length > 0 && (
-                    <div className="player-amounts-container" style={{ margin: '20px 0' }}>
-                        <h3>Player Card Amounts:</h3>
-                        {Object.entries(playerAmounts).map(([playerName, amount]) => (
-                            <div key={playerName}>
-                                <p>
-                                    {playerName} {playerName === userName ? "(you)" : ""} has: {amount} cards
-                                </p>
-                                <button onClick={async () => {
-                                    if (connection) {
-                                        try {
-                                            await connection.invoke("AnnoyPlayer", roomName, playerName, "soundeffect");
-                                        } catch (error) {
-                                            console.error("Annoy player failed:", error);
-                                            alert(`Annoy player failed: ${error.message}`);
-                                        }
-                                    }
-                                }}>Send Annoying Sound Effect</button>
-                                {/* Mute player (so they can't annoy you with sound effect) */}
-                                <button onClick={async () => {
-                                    if (connection) {
-                                        try {
-                                            await connection.invoke("ToggleMutePlayer", roomName, playerName);
-                                        } catch (error) {
-                                            console.error("Toggle mute player failed:", error);
-                                            alert(`Toggle mute player failed: ${error.message}`);
-                                        }
-                                    }
-                                }}>Toggle Mute</button>
-
-                                <button onClick={async () => {
-                                    if (connection) {
-                                        try {
-                                            await connection.invoke("AnnoyPlayer", roomName, playerName, "flashbang");
-                                        } catch (error) {
-                                            console.error("Annoy player failed:", error);
-                                            alert(`Annoy player failed: ${error.message}`);
-                                        }
-                                    }
-                                }}>Send Annoying Flashbang</button>
-                            </div>
-
-                        ))}
-                    </div>
-                )}
 
                 <div className="annoy-player-container" style={{ margin: '20px 0' }}>
-                    <button onClick={async () => {
-                        if (connection) {
-                            try {
-                                await connection.invoke("AnnoyPlayers", roomName, "flashbang");
-                            } catch (error) {
-                                console.error("Annoy players failed:", error);
-                                alert(`Annoy players failed: ${error.message}`);
+                    <button
+                        style={{
+                            backgroundColor: '#ff9800', // orange
+                            color: '#fff',
+                            fontWeight: 'bold',
+                            padding: '8px 16px',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            margin: '5px',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                            transition: 'all 0.15s ease-in-out'
+                        }}
+                        onMouseOver={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                        onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+                        onClick={async () => {
+                            if (connection) {
+                                try {
+                                    await connection.invoke("AnnoyPlayers", roomName, "flashbang");
+                                } catch (error) {
+                                    console.error("Annoy players failed:", error);
+                                    alert(`Annoy players failed: ${error.message}`);
+                                }
                             }
-                        }
-                    }}>Annoy All Players with Flashbang</button>
+                        }}
+                    >
+                        Annoy All Players with Flashbang
+                    </button>
+                </div>
+                <div className="annoy-player-container" style={{ margin: '20px 0' }}>
+                    <button
+                        style={{
+                            backgroundColor: '#28a745', // green
+                            color: '#fff',
+                            fontWeight: 'bold',
+                            padding: '8px 16px',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            margin: '5px',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                            transition: 'all 0.15s ease-in-out'
+                        }}
+                        onMouseOver={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                        onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+                        onClick={async () => {
+                            if (connection) {
+                                try {
+                                    await connection.invoke("AnnoyPlayers", roomName, "soundeffect");
+                                } catch (error) {
+                                    console.error("Annoy players failed:", error);
+                                    alert(`Annoy players failed: ${error.message}`);
+                                }
+                            }
+                        }}
+                    >
+                        Annoy All Players with Sound Effect
+                    </button>
                 </div>
 
                 {topCard && (
