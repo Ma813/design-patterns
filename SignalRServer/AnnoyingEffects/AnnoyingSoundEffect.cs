@@ -3,15 +3,14 @@ using SignalRServer.Models;
 
 public class AnnoyingSoundEffect : IAnnoyingEffects
 {
-    private SoundEffectAdaptee _adaptee;
+    private static SoundEffectAdaptee? _adaptee;
 
-    public AnnoyingSoundEffect()
+    public AnnoyingSoundEffect(SoundEffectAdaptee adaptee)
     {
-        _adaptee = new SoundEffectAdaptee();
+        _adaptee = adaptee;
     }
-
-    public async Task Annoy(IClientProxy player, IClientProxy caller)
+    public async Task Annoy(IClientProxy player, IClientProxy caller, string playerUsername = "", string callerUsername = "")
     {
-        await _adaptee.SendSoundEffect(player, caller);
+        await _adaptee.SendSoundEffect(player, caller, playerUsername, callerUsername);
     }
 }

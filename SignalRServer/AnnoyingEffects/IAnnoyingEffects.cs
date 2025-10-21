@@ -4,6 +4,6 @@ namespace SignalRServer.Models
 {
     public interface IAnnoyingEffects
     {
-        Task Annoy(IClientProxy player, IClientProxy caller);
+        Task Annoy(IClientProxy player, IClientProxy caller, string playerUsername = "", string callerUsername = "");
     }
 }

@@ -4,12 +4,12 @@ public class SoundEffectAdaptee
 {
     // Key - player who is muted
     // Value - list of players who muted the key player
-    private Dictionary<IClientProxy, List<IClientProxy>> mutedPlayers = new Dictionary<IClientProxy, List<IClientProxy>>();
+    private Dictionary<string, List<string>> mutedPlayers = new Dictionary<string, List<string>>();
 
 
-    public async Task SendSoundEffect(IClientProxy player, IClientProxy caller)
+    public async Task SendSoundEffect(IClientProxy player, IClientProxy caller, string playerUsername, string callerUsername)
     {
-        if (mutedPlayers.ContainsKey(player) && mutedPlayers[player] == caller)
+        if (mutedPlayers.ContainsKey(playerUsername) && mutedPlayers[playerUsername].Contains(callerUsername))
         {
             // Player is muted, do not send sound effect
             System.Console.WriteLine($"{caller} tried to annoy muted user {player} with sound effect, but they are muted.");
@@ -21,11 +21,13 @@ public class SoundEffectAdaptee
         System.Console.WriteLine($"{caller} is annoying user {player} with sound effect!");
     }
 
-    public async Task ToggleMutePlayer(IClientProxy mutedPlayer, IClientProxy mutingPlayer)
+    public async Task ToggleMutePlayer(string mutedPlayer, string mutingPlayer)
     {
+        System.Console.WriteLine($"Current muted players: {System.Text.Json.JsonSerializer.Serialize(mutedPlayers)}");
+
         if (!mutedPlayers.ContainsKey(mutedPlayer))
         {
-            mutedPlayers[mutedPlayer] = new List<IClientProxy>();
+            mutedPlayers[mutedPlayer] = new List<string>();
         }
 
         if (mutedPlayers[mutedPlayer].Contains(mutingPlayer))

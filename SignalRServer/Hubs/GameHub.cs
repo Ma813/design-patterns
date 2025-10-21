@@ -1,3 +1,4 @@
+using System.Runtime.InteropServices;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Models;
@@ -8,14 +9,17 @@ namespace SignalRServer.Hubs
     {
         private static readonly Dictionary<string, string> UserRooms = new Dictionary<string, string>();
         private static readonly Dictionary<string, AbstractGame> Games = new Dictionary<string, AbstractGame>(); // {roomName: Game}
-        
+
         private static readonly Dictionary<string, string> UsernameToConnectionId = new Dictionary<string, string>();
 
-        IAnnoyingEffects annoyingFlashbang = new AnnoyingFlashbang();
-        IAnnoyingEffects annoyingSoundEffect = new AnnoyingSoundEffect();
+        private static readonly SoundEffectAdaptee annoyingSoundAdaptee = new SoundEffectAdaptee();
+        AnnoyingFlashbang annoyingFlashbang = new AnnoyingFlashbang();
+        AnnoyingSoundEffect annoyingSoundEffect;
 
-
-        SoundEffectAdaptee annoyingSoundAdaptee = new SoundEffectAdaptee();
+        public GameHub()
+        {
+            annoyingSoundEffect = new AnnoyingSoundEffect(annoyingSoundAdaptee);
+        }
 
         AbstractGameCreator gameFactory = new GameCreator();
 
@@ -151,7 +155,7 @@ namespace SignalRServer.Hubs
         {
             string playerId = UsernameToConnectionId[player];
             IClientProxy singlePlayer = Clients.Client(playerId);
-            
+
             IAnnoyingEffects annoyingEffect;
 
             switch (message)
@@ -174,7 +178,12 @@ namespace SignalRServer.Hubs
             string playerId = UsernameToConnectionId[player];
             IClientProxy muted = Clients.Client(playerId);
             IClientProxy muting = Clients.Caller;
-            await annoyingSoundAdaptee.ToggleMutePlayer(muted, muting);
+
+            string username = UsernameToConnectionId.FirstOrDefault(x => x.Value == Context.ConnectionId).Key;
+
+            System.Console.WriteLine(annoyingSoundAdaptee.GetHashCode());
+
+            await annoyingSoundAdaptee.ToggleMutePlayer(player, username);
         }
 
         private async Task notifyPlayers(AbstractGame game)
