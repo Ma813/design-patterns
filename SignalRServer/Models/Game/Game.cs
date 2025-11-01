@@ -1,7 +1,13 @@
 namespace SignalRServer.Models
 {
-    public class DrawToMatchGame : AbstractGame
+    public class Game : AbstractGame
     {
+        public Game(string roomName = "DefaultRoom") : base(roomName)
+        {
+            RoomName = roomName;
+        }
+
+
         public override void Start()
         {
             IsStarted = true;
@@ -30,8 +36,7 @@ namespace SignalRServer.Models
                 UnoCard card = UnoCard.GenerateCard();
                 playerDeck.AddCard(card);
             }
-            // NextPlayer();
-            // In DrawToMatch, the player does not change after drawing a card
+            NextPlayer();
         }
 
         public override string PlayCard(string username, UnoCard card)
@@ -40,7 +45,7 @@ namespace SignalRServer.Models
 
             if (playerDeck == null) return "Player not found";
             if (playerDeck != PlayerDecks[CurrentPlayerIndex]) return "Not your turn";
-            if (!card.CanPlayOn(TopCard, this.CardPlacementStrategy)) return "Card cannot be played on top of current top card";
+            if (!card.CanPlayOn(TopCard,this.CardPlacementStrategy)) return "Card cannot be played on top of current top card";
 
             playerDeck.RemoveCard(card);
             TopCard = card;

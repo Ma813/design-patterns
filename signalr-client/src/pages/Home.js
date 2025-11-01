@@ -7,6 +7,7 @@ function Home() {
     const [roomName, setRoomName] = useState('');
     const [gameMode, setGameMode] = useState("Classic");
     const [placementStrategy, setPlacementStrategy] = useState("UnoPlacementStrategy");
+    const [botCount, setBotCount] = useState(0);
 
     const navigate = useNavigate();
 
@@ -17,7 +18,8 @@ function Home() {
                 state: { 
                     userName, 
                     gameMode,
-                    placementStrategy 
+                    placementStrategy,
+                    botCount
                 } 
             });
         }
@@ -79,6 +81,20 @@ function Home() {
                         <option value="ColorOnlyPlacementStrategy">Color Only</option>
                         <option value="NumberOnlyPlacementStrategy">Number Only</option>
                     </select>
+                </div>
+
+                <div className="form-group">
+                    <label htmlFor="botCount" className="form-label">Number of Bots</label>
+                    <input
+                        id="botCount"
+                        type="number"
+                        min="0"
+                        max="10"
+                        placeholder="0"
+                        value={botCount}
+                        onChange={(e) => setBotCount(e.target.value)}
+                        className="form-input"
+                    />
                 </div>
 
                 <div>

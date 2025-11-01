@@ -1,7 +1,13 @@
 namespace SignalRServer.Models
 {
-    public class EndlessGame : AbstractGame
+    public class DrawToMatchGame : AbstractGame
     {
+        public DrawToMatchGame(string roomName = "DefaultRoom") : base(roomName)
+        {
+            RoomName = roomName;
+        }
+
+
         public override void Start()
         {
             IsStarted = true;
@@ -15,7 +21,11 @@ namespace SignalRServer.Models
 
         public override void End()
         {
-            // Endless game does not end
+            IsStarted = false;
+            PlayerDecks.Clear();
+            TopCard = UnoCard.GenerateCard();
+            CurrentPlayerIndex = 0;
+            Direction = 1;
         }
 
         public override void DrawCard(string username)
@@ -26,7 +36,8 @@ namespace SignalRServer.Models
                 UnoCard card = UnoCard.GenerateCard();
                 playerDeck.AddCard(card);
             }
-            NextPlayer();
+            // NextPlayer();
+            // In DrawToMatch, the player does not change after drawing a card
         }
 
         public override string PlayCard(string username, UnoCard card)
@@ -35,7 +46,7 @@ namespace SignalRServer.Models
 
             if (playerDeck == null) return "Player not found";
             if (playerDeck != PlayerDecks[CurrentPlayerIndex]) return "Not your turn";
-            if (!card.CanPlayOn(TopCard,this.CardPlacementStrategy)) return "Card cannot be played on top of current top card";
+            if (!card.CanPlayOn(TopCard, this.CardPlacementStrategy)) return "Card cannot be played on top of current top card";
 
             playerDeck.RemoveCard(card);
             TopCard = card;

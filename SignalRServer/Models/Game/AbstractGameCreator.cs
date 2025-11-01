@@ -6,6 +6,6 @@ namespace SignalRServer.Models
     // Abstract factory
     public abstract class AbstractGameCreator
     {
-        public abstract AbstractGame CreateGame(string gameMode = "Classic");
+        public abstract AbstractGame CreateGame(string gameMode = "Classic", string roomName = "DefaultRoom");
     }
 }

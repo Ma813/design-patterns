@@ -1,7 +1,13 @@
 namespace SignalRServer.Models
 {
-    public class Game : AbstractGame
+    public class EndlessGame : AbstractGame
     {
+        public EndlessGame(string roomName = "DefaultRoom") : base(roomName)
+        {
+            RoomName = roomName;
+        }
+
+
         public override void Start()
         {
             IsStarted = true;
@@ -15,11 +21,7 @@ namespace SignalRServer.Models
 
         public override void End()
         {
-            IsStarted = false;
-            PlayerDecks.Clear();
-            TopCard = UnoCard.GenerateCard();
-            CurrentPlayerIndex = 0;
-            Direction = 1;
+            // Endless game does not end
         }
 
         public override void DrawCard(string username)

@@ -19,14 +19,18 @@ function App() {
     const [playerAmounts, setPlayerAmounts] = useState([]);
     const [currentPlayer, setCurrentPlayer] = useState(null);
     const [error, setError] = useState(null);
+    const [botCount, setBotCount] = useState(0);
     const location = useLocation();
 
     useEffect(() => {
         const urlParts = window.location.pathname.split('/');
         const room = urlParts[urlParts.length - 1];
         const name = location.state?.userName || `User${Math.floor(Math.random() * 10000)}`;
+        const botCount = parseInt(location.state?.botCount) || 0;
+        
         setUserName(name);
         setRoomName(room);
+        setBotCount(botCount);
     }, []);
 
     useEffect(() => {
@@ -34,9 +38,9 @@ function App() {
             const gameMode = location.state?.gameMode || "Classic";
             const placementStrategy = location.state?.placementStrategy || "Uno Standard";
 
-            joinRoom(gameMode, placementStrategy);
+            joinRoom(gameMode, placementStrategy, botCount);
         }
-    }, [roomName, userName]);
+    }, [roomName, userName, botCount]);
 
 
     const connectToHub = async () => {
@@ -143,7 +147,7 @@ function App() {
         }
     };
 
-    const joinRoom = async (gameMode, placementStrategy) => {
+    const joinRoom = async (gameMode, placementStrategy, botCount) => {
         let activeConnection = connection;
 
         if (!isConnected) {
@@ -152,7 +156,7 @@ function App() {
 
         if (activeConnection && roomName && userName) {
             try {
-                await activeConnection.invoke('JoinRoom', roomName, userName, gameMode, placementStrategy);
+                await activeConnection.invoke('JoinRoom', roomName, userName, botCount, gameMode, placementStrategy);
                 setHasJoined(true);
                 console.log('Joined room:', roomName);
             } catch (error) {
@@ -175,7 +179,7 @@ function App() {
 
     async function handleCardPlay(card) {
         console.log("Card clicked:", card);
-        if (connection && started && currentPlayer === userName) {
+        if (connection && started /*&& currentPlayer === userName*/) {
             try {
                 await connection.invoke("PlayCard", roomName, userName, card);
             } catch (error) {

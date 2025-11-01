@@ -78,3 +78,71 @@ ehthumbs.db
 Icon?
 obj/*
 bin/*
+
+.fake
+
+## Build Folders
+bin/
+obj/
+out/
+
+## Visual Studio / Rider / IDE files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.idea/
+*.iml
+
+## Rider
+.idea/
+*.sln.iml
+
+## Mono Auto Generated Files
+mono_crash.*
+
+## Visual Studio Code
+.vscode/
+
+## ASP.NET / Web specific
+wwwroot/
+node_modules/
+
+## NuGet
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## Logs
+*.log
+
+## OS Generated Files
+.DS_Store
+Thumbs.db
+
+## Rider / JetBrains
+.idea/
+*.iws
+*.ipr
+*.iml
+
+## Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+
+## Resharper
+_ReSharper*/
+*.DotSettings.user
+
+## Others
+*.cache
+*.pdb
+*.mdb
+*.opendb
