@@ -1,4 +1,6 @@
+using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Hubs;
+using SignalRServer.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,6 +8,13 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+
+builder.Services.AddSingleton<Facade>(sp =>
+{
+    var hubContext = sp.GetRequiredService<IHubContext<GameHub>>();
+    return Facade.GetInstance(hubContext);
+});
 
 // Add SignalR
 builder.Services.AddSignalR();
