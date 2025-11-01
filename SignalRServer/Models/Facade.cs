@@ -4,6 +4,7 @@
 using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Hubs;
 using SignalRServer.Models.CardPlacementStrategies;
+using SignalRServer.Models.Chat;
 
 namespace SignalRServer.Models
 {
@@ -60,7 +61,6 @@ namespace SignalRServer.Models
             {
                 game = gameFactory.CreateGame(gameMode, roomName);
                 Games[roomName] = game;
-                game.setClients(Clients);
             }
 
             UsernameToConnectionId[userName] = connectionId;
@@ -184,6 +184,10 @@ namespace SignalRServer.Models
 
         public async Task AnnoyPlayer(string roomName, string player, string message, IHubCallerClients<IClientProxy> Clients, HubCallerContext Context)
         {
+            if (!UsernameToConnectionId.ContainsKey(player))
+            {
+                return;
+            }
             string playerId = UsernameToConnectionId[player];
             IClientProxy singlePlayer = Clients.Client(playerId);
 
@@ -208,6 +212,10 @@ namespace SignalRServer.Models
 
         public async Task ToggleMutePlayer(string roomname, string player, IHubCallerClients Clients, HubCallerContext Context)
         {
+            if (!UsernameToConnectionId.ContainsKey(player))
+            {
+                return;
+            }
             string playerId = UsernameToConnectionId[player];
             IClientProxy muted = Clients.Client(playerId);
             IClientProxy muting = Clients.Caller;
@@ -216,6 +224,12 @@ namespace SignalRServer.Models
 
 
             await annoyingSoundAdaptee.ToggleMutePlayer(player, username);
+        }
+
+        public async Task SendTextMessage(string roomName, string sender, string text)
+        {
+            Message message = new Message(sender, text);
+            await message.SendMessageAsync(_hubContext.Clients.Group(roomName));
         }
 
         private async Task notifyPlayers(AbstractGame game)

@@ -5,8 +5,11 @@ import * as signalR from '@microsoft/signalr';
 import Deck from '../components/Deck';
 import Card from '../components/Card'
 import PlayerCardInfo from '../components/PlayerInfoCard';
+import Chat from '../components/Chat';
 
 function App() {
+    // Chat sidebar state
+    const [isChatOpen, setIsChatOpen] = useState(true);
     const [connection, setConnection] = useState(null);
     const [roomName, setRoomName] = useState('');
     const [userName, setUserName] = useState('');
@@ -21,13 +24,15 @@ function App() {
     const [error, setError] = useState(null);
     const [botCount, setBotCount] = useState(0);
     const location = useLocation();
+    // Chat message state
+    const [messages, setMessages] = useState([]);
 
     useEffect(() => {
         const urlParts = window.location.pathname.split('/');
         const room = urlParts[urlParts.length - 1];
         const name = location.state?.userName || `User${Math.floor(Math.random() * 10000)}`;
         const botCount = parseInt(location.state?.botCount) || 0;
-        
+
         setUserName(name);
         setRoomName(room);
         setBotCount(botCount);
@@ -120,6 +125,12 @@ function App() {
                 setError(message);
             });
 
+            // Chat message handler
+            newConnection.on('ReceiveMessage', (messageObj) => {
+                // messageObj is { sender, text, timestamp }
+                setMessages(prevMessages => [...prevMessages, messageObj]);
+            });
+
             // Start connection
             await newConnection.start();
             setConnection(newConnection);
@@ -199,8 +210,29 @@ function App() {
     }, [connection]);
 
     return (
-        <div className="Game">
-            <header className="Game-header">
+        <div className="Game" style={{ position: 'relative', minHeight: '100vh' }}>
+            {/* Chat Toggle Button */}
+            <button
+                style={{
+                    position: 'fixed',
+                    top: 20,
+                    right: isChatOpen ? 340 : 20,
+                    zIndex: 2000,
+                    backgroundColor: '#222',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '10px 18px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    transition: 'right 0.3s'
+                }}
+                onClick={() => setIsChatOpen(open => !open)}
+            >
+                {isChatOpen ? 'Close Chat' : 'Open Chat'}
+            </button>
+            <header className="Game-header" style={{ marginRight: isChatOpen ? 340 : 0, transition: 'margin-right 0.3s' }}>
                 <h1>Dos game room</h1>
 
                 {hasJoined && !started && (
@@ -376,6 +408,33 @@ function App() {
                     </div>
                 )}
             </header>
+            {/* Chat Sidebar */}
+            <div
+                style={{
+                    position: 'fixed',
+                    top: 0,
+                    right: 0,
+                    width: 320,
+                    height: '100vh',
+                    background: '#fff',
+                    boxShadow: '-3px 0 20px rgba(0,0,0,0.15)',
+                    display: isChatOpen ? 'flex' : 'none',
+                    flexDirection: 'column',
+                    zIndex: 1500,
+                    borderLeft: '1px solid #e0e0e0',
+                    overflow: 'hidden',
+                    transition: 'opacity 0.3s ease-in-out'
+                }}
+            >
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                    <Chat
+                        connection={connection}
+                        roomName={roomName}
+                        userName={userName}
+                        messages={messages}
+                    />
+                </div>
+            </div>
         </div>
     );
 }

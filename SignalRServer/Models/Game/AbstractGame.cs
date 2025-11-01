@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Models.CardPlacementStrategies;
 namespace SignalRServer.Models
@@ -16,7 +17,6 @@ namespace SignalRServer.Models
         public List<BotClient> Bots { get; set; } = new List<BotClient>();
         protected ICardPlacementStrategy CardPlacementStrategy { get; set; }
 
-        public IHubCallerClients<IClientProxy>? Clients { get; set; } = null;
 
         protected AbstractGame(string roomName)
         {
@@ -28,14 +28,12 @@ namespace SignalRServer.Models
             CurrentPlayerIndex = 0;
             Direction = 1;
             CardPlacementStrategy = new UnoPlacementStrategy();
-
         }
 
-        public void setClients(IHubCallerClients<IClientProxy> clients)
+        public ICardPlacementStrategy GetPlacementStrategy()
         {
-            Clients = clients;
+            return CardPlacementStrategy;
         }
-
 
         public void SetPlacementStrategy(ICardPlacementStrategy strategy)
         {
@@ -47,11 +45,11 @@ namespace SignalRServer.Models
         public abstract string PlayCard(string username, UnoCard card);
         protected abstract void NextPlayer();
 
-        public void NotifyBots()
+        public async Task NotifyBots()
         {
             foreach (var bot in Bots)
             {
-                bot.getNotified();
+                await bot.getNotified();
             }
         }
 

@@ -66,6 +66,11 @@ namespace SignalRServer.Hubs
             await facade.ToggleMutePlayer(roomname, player, Clients, Context);
         }
 
+        public async Task SendMessage(string roomName, string sender, string text)
+        {
+            await facade.SendTextMessage(roomName, sender, text);
+        }
+
         // private async Task notifyPlayers(AbstractGame game)
         // {
         //     foreach (var player in game.Players)
