@@ -1,3 +1,4 @@
+using SignalRServer.Card;
 using SignalRServer.Models.CardPlacementStrategies;
 using SignalRServer.Models.Game;
 
@@ -29,6 +30,7 @@ public class PlayCardCommand : Command
         }
 
         game.TopCard = card;
+        card.Play(game);
         pd.Cards.Remove(card);
         game.NotifyAll(Action.place, card);
 

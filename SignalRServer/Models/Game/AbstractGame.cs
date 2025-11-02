@@ -1,3 +1,4 @@
+using SignalRServer.Card;
 using SignalRServer.Models.CardPlacementStrategies;
 using SignalRServer.Models.ThemeFactories;
 
@@ -47,6 +48,7 @@ public abstract class AbstractGame : ISubject
     public abstract string PlayCard(string username, UnoCard card);
     public abstract string UndoCard(string username);
     public abstract void NextPlayer(Action action);
+    public abstract void NextDrawCard();
 
     public async Task NotifyBots()
     {
@@ -73,7 +75,7 @@ public abstract class AbstractGame : ISubject
 
     public void AttachObservers()
     {
-        base.Add(new CardCountUpdater());
+        Add(new CardCountUpdater());
     }
 
     public void SetCardCount(Dictionary<string, int> cardCount)

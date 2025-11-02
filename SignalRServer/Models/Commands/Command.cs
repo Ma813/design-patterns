@@ -1,3 +1,4 @@
+using SignalRServer.Card;
 using SignalRServer.Models.Game;
 
 namespace SignalRServer.Models.Commands;
@@ -23,14 +24,14 @@ public abstract class Command
     {
         backup.Cards.Clear();
         foreach (UnoCard uc in pd.Cards) backup.AddCard(uc);
-        topCardBackup = new UnoCard(game.TopCard.Color, game.TopCard.Digit);
+        topCardBackup = UnoCard.GenerateCard();
     }
 
     public void Undo()
     {
         pd.Cards.Clear();
         foreach (UnoCard uc in backup.Cards) pd.AddCard(uc);
-        game.TopCard = new UnoCard(topCardBackup.Color, topCardBackup.Digit);
+        game.TopCard = UnoCard.GenerateCard();
     }
 
     public abstract override string ToString();

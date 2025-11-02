@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.SignalR;
+using SignalRServer.Card;
 using SignalRServer.Models;
 
 namespace SignalRServer.Hubs;
@@ -33,10 +34,10 @@ public class PlayerHub : Hub
         await facade.DrawCard(roomName, userName, Clients);
     }
 
-    public async Task<bool> PlayCard(string roomName, string userName, UnoCard card)
+    public async Task<bool> PlayCard(string roomName, string userName, int cardIndex)
     {
         logger.LogInfo($"User {userName} is playing a card in room {roomName}");
-        bool result = await facade.PlayCard(roomName, userName, card, Clients);
+        bool result = await facade.PlayCard(roomName, userName, cardIndex, Clients);
         return result;
     }
 

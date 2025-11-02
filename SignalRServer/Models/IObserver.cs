@@ -1,3 +1,5 @@
+using SignalRServer.Card;
+
 namespace SignalRServer.Models;
 
 public enum Action

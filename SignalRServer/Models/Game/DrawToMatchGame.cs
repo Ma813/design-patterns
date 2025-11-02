@@ -1,3 +1,4 @@
+using SignalRServer.Card;
 using SignalRServer.Models.Commands;
 
 namespace SignalRServer.Models.Game;
@@ -73,5 +74,11 @@ public class DrawToMatchGame : AbstractGame
             return;
         }
         CurrentPlayerIndex = (CurrentPlayerIndex + Direction + PlayerDecks.Count) % PlayerDecks.Count;
+    }
+
+    public override void NextDrawCard()
+    {
+        var next = (CurrentPlayerIndex + Direction + PlayerDecks.Count) % PlayerDecks.Count;
+        PlayerDecks[next].ExecuteCommand(new DrawCardCommand(this, PlayerDecks[next]));
     }
 }

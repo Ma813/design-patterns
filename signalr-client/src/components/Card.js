@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
 
-const Card = ({ card, onPlay, cardColors }) => {
+const Card = ({ card, index, onPlay, cardColors }) => { // Add index prop
     const colorMap = cardColors || {
         red: '#ff4d4f',
         green: '#52c41a',
         yellow: '#faad14',
         blue: '#1890ff'
     };
-    console.log("Card colors:", cardColors);
     const [bg, setBg] = useState(colorMap[card.color] || '#d9d9d9');
-     // Add useEffect to update bg when card.color changes
+    
+    // Add useEffect to update bg when card.color changes
     useEffect(() => {
         setBg(colorMap[card.color] || '#d9d9d9');
     }, [card.color]);
@@ -26,7 +26,7 @@ const Card = ({ card, onPlay, cardColors }) => {
 
     const handleClick = () => {
         if (onPlay) {
-            onPlay();
+            onPlay(index); // Pass both card and index
         }
     };
 
@@ -46,13 +46,14 @@ const Card = ({ card, onPlay, cardColors }) => {
                 boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                 transition: 'background 0.2s',
                 userSelect: 'none',
-                cursor: 'pointer', // Add cursor pointer to indicate it's clickable
+                cursor: 'pointer',
+                fontSize: card.name?.length > 2 ? 14 : 24
             }}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
-            onClick={handleClick} // Add onClick handler here
+            onClick={handleClick}
         >
-            {card.digit}
+            {card.name?.replaceAll('+', '\n')}
         </div>
     );
 };

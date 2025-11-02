@@ -1,3 +1,4 @@
+using SignalRServer.Card;
 using SignalRServer.Models.Game;
 
 namespace SignalRServer.Models.Commands;

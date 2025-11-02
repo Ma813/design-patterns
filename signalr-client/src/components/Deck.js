@@ -10,7 +10,8 @@ export default function Deck({ deck, cardColors, onCardPlay }) {
                 <Card
                     key={idx}
                     card={card}
-                    onPlay={() => onCardPlay(card)}
+                    index={idx} // Pass the index to Card component
+                    onPlay={() => onCardPlay(idx)} // Pass both card and index
                     cardColors={cardColors}
                 />
             ))}

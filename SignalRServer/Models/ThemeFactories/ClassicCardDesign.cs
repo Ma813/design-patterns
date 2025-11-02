@@ -8,7 +8,7 @@ public class ClassicCardDesign : ICardDesign
         {
             { "red", "#FF4C4C" },
             { "green", "#4CFF4C" },
-            { "yellow", "#FFFF66" },
+            { "yellow", "#faad14" },
             { "blue", "#4C4CFF" }
         };
     }

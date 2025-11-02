@@ -3,6 +3,7 @@
 
 using Microsoft.AspNetCore.SignalR;
 using SignalRServer.AnnoyingEffects;
+using SignalRServer.Card;
 using SignalRServer.Hubs;
 using SignalRServer.Models.CardPlacementStrategies;
 using SignalRServer.Models.Chat;
@@ -151,7 +152,7 @@ public class Facade
         await notifyPlayers(game);
     }
 
-    public async Task<bool> PlayCard(string roomName, string userName, UnoCard card, IHubCallerClients<IClientProxy>? Clients)
+    public async Task<bool> PlayCard(string roomName, string userName, int cardIndex, IHubCallerClients<IClientProxy>? Clients)
     {
         if (Clients == null)
         {
@@ -160,7 +161,14 @@ public class Facade
 
         AbstractGame game = Games[roomName];
 
-        string result = game.PlayCard(userName, card);
+        var playerDeck = game.PlayerDecks.FirstOrDefault(pd => pd.Username == userName);
+        if (playerDeck == null)
+        {
+            await Clients.Caller.SendAsync("Error", "Player not found");
+            return false;
+        }
+
+        string result = game.PlayCard(userName, playerDeck.Cards[cardIndex]);
         if (result == "WIN")
         {
             await _hubContext.Clients.Group(roomName).SendAsync("GameEnded", $"{userName} has won the game!");

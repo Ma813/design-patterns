@@ -209,11 +209,12 @@ function App() {
         }
     };
 
-    async function handleCardPlay(card) {
-        console.log("Card clicked:", card);
+    async function handleCardPlay(index) {
         if (connection && started && !actionMade) {
             try {
-                const success = await connection.invoke("PlayCard", roomName, userName, card);
+                // Send the entire card object to the server
+                console.log("Invoking PlayCard with card:", index);
+                const success = await connection.invoke("PlayCard", roomName, userName, index);
                 if (success) {
                     setAction(1);
                     setActionMade(true);

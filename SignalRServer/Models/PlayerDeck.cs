@@ -1,3 +1,4 @@
+using SignalRServer.Card;
 using SignalRServer.Models.Commands;
 
 namespace SignalRServer.Models;
@@ -12,7 +13,8 @@ public class PlayerDeck
     {
         Cards = [];
         Username = username;
-        for (int i = 0; i < 2; i++)
+        Cards.Add(UnoCard.GenerateSuperCard());
+        for (int i = 0; i < 4; i++)
         {
             UnoCard card = UnoCard.GenerateCard();
             Cards.Add(card);

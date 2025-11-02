@@ -59,14 +59,14 @@ public class BotClient : IBotClientPrototype
             // Simple bot logic: draw a card if no playable card, else play the first playable card
             var playerDeck = game.PlayerDecks.First(pd => pd.Username == UserName);
             // TODO Change logic to find a playable card to match ruleset
-            var playableCard = playerDeck.Cards.FirstOrDefault(card =>
+            var playableCardIndex = playerDeck.Cards.FindIndex(card =>
                 card.CanPlayOn(game.TopCard, game.GetPlacementStrategy()));
 
-            if (playableCard != null)
+            if (playableCardIndex != -1)
             {
-                logger.LogInfo($"{UserName} (Bot) plays {playableCard.Color} {playableCard.Digit}");
+                logger.LogInfo($"{UserName} (Bot) plays {playerDeck.Cards[playableCardIndex].Color} {playerDeck.Cards[playableCardIndex].Digit}");
                 game.NextPlayer(Action.place);
-                await facade.PlayCard(game.RoomName, UserName, playableCard, null);
+                await facade.PlayCard(game.RoomName, UserName, playableCardIndex, null);
 
                 // Brag about winning
                 if (playerDeck.Cards.Count == 0)

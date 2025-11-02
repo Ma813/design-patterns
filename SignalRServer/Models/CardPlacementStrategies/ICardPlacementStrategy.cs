@@ -1,3 +1,5 @@
+using SignalRServer.Card;
+
 namespace SignalRServer.Models.CardPlacementStrategies;
 
 public interface ICardPlacementStrategy
