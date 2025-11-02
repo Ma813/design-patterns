@@ -4,10 +4,12 @@ public class PlayerDeck
 {
     public List<UnoCard> Cards { get; private set; }
     public string Username { get; private set; }
+
     public PlayerDeck(string username)
     {
-        Cards = new List<UnoCard>();
-        Username = username; for (int i = 0; i < 2; i++)
+        Cards = [];
+        Username = username;
+        for (int i = 0; i < 2; i++)
         {
             UnoCard card = UnoCard.GenerateCard();
             Cards.Add(card);

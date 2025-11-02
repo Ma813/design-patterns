@@ -30,6 +30,7 @@ public class EndlessGame : AbstractGame
         {
             UnoCard card = UnoCard.GenerateCard();
             playerDeck.AddCard(card);
+            NotifyAll(Action.draw, card);
         }
         NextPlayer();
     }
@@ -44,6 +45,7 @@ public class EndlessGame : AbstractGame
 
         playerDeck.RemoveCard(card);
         TopCard = card;
+        NotifyAll(Action.place, card);
         if (playerDeck.Count == 0)
         {
             End();

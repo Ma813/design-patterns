@@ -7,7 +7,6 @@ public class DrawToMatchGame : AbstractGame
         RoomName = roomName;
     }
 
-
     public override void Start()
     {
         IsStarted = true;
@@ -34,7 +33,9 @@ public class DrawToMatchGame : AbstractGame
         {
             UnoCard card = UnoCard.GenerateCard();
             playerDeck.AddCard(card);
+            NotifyAll(Action.draw, card);
         }
+
         // NextPlayer();
         // In DrawToMatch, the player does not change after drawing a card
     }
@@ -49,6 +50,7 @@ public class DrawToMatchGame : AbstractGame
 
         playerDeck.RemoveCard(card);
         TopCard = card;
+        NotifyAll(Action.place, card);
         if (playerDeck.Count == 0)
         {
             End();
