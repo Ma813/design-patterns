@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.SignalR;
 
-
 // Null object pattern for IHubCallerClients
 public class NullClients : IHubCallerClients<IClientProxy>
 {

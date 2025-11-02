@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Models;
 
+namespace SignalRServer.AnnoyingEffects;
+
 public class AnnoyingSoundEffect : IAnnoyingEffects
 {
     private static SoundEffectAdaptee? _adaptee;
@@ -9,6 +11,7 @@ public class AnnoyingSoundEffect : IAnnoyingEffects
     {
         _adaptee = adaptee;
     }
+
     public async Task Annoy(IClientProxy player, IClientProxy caller, string playerUsername = "", string callerUsername = "")
     {
         if (_adaptee == null)
