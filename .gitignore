@@ -24,8 +24,8 @@ yarn-error.log*
 
 ### .NET ###
 # Build results
-[Bb]in/
-[Oo]bj/
+*/[Bb]in/
+*/[Oo]bj/
 
 # VS files
 .vs/
