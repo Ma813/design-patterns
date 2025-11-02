@@ -14,11 +14,11 @@ public class PlayerHub : Hub
         this.facade = facade;
     }
 
-    public async Task JoinRoom(string roomName, string userName, int botAmount = 0, string gameMode = "Classic", string cardPlacementStrategy = "UnoPlacementStrategy", string theme = "Classic")
+    public async Task JoinRoom(string roomName, string userName, int botAmount = 0, string gameMode = "Classic", string cardPlacementStrategy = "UnoPlacementStrategy")
     {
 
-        logger.LogInfo($"User {userName} is joining room {roomName} with {botAmount} bots, game mode: {gameMode}, card placement strategy: {cardPlacementStrategy}, theme: {theme}");
-        await facade.JoinRoom(roomName, userName, Clients, Context, Groups, botAmount, gameMode, cardPlacementStrategy, theme);
+        logger.LogInfo($"User {userName} is joining room {roomName} with {botAmount} bots, game mode: {gameMode}, card placement strategy: {cardPlacementStrategy}");
+        await facade.JoinRoom(roomName, userName, Clients, Context, Groups, botAmount, gameMode, cardPlacementStrategy);
     }
 
     public async Task StartGame(string roomName, string userName)
@@ -72,12 +72,13 @@ public class PlayerHub : Hub
 
     public async Task NextPlayer(string roomName, string actionType)
     {
-<<<<<<< HEAD:SignalRServer/Hubs/GameHub.cs
+        await facade.NextPlayer(roomName, actionType, Clients);
         logger.LogInfo($"Next player turn in room {roomName}");
         await facade.NextPlayer(roomName, actionType, Clients);
     }
 public async Task JoinRoomThroughDirector(string roomName, string userName, string builderType)
     {
+        
         await facade.JoinRoomThroughDirector(roomName, userName, builderType, Clients, Context, Groups);
 }
     // private async Task notifyPlayers(AbstractGame game)
@@ -91,8 +92,6 @@ public async Task JoinRoomThroughDirector(string roomName, string userName, stri
 
     // // Add this method to get current connection status
     // public string GetConnectionId() => Context.ConnectionId;
-=======
         
     
->>>>>>> f7f5cc4088c654315194984a93c4dd137272b249:SignalRServer/Hubs/PlayerHub.cs
 }
