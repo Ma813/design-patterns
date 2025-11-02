@@ -44,7 +44,7 @@ public partial class UnoCard
         }
         else
         {
-            string[] powerTypes = { "Skip", "Draw" };
+            string[] powerTypes = { "Skip", "Draw", "NewRule" };
             string powerType = powerTypes[random.Next(powerTypes.Length)];
             return new PowerCard(color, powerType);
         }

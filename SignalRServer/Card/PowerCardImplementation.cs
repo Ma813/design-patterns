@@ -1,5 +1,5 @@
 using SignalRServer.Models.Game;
-
+using SignalRServer.Models.CardPlacementStrategies;
 namespace SignalRServer.Card;
 
 public class PowerCardImplementation : ICardImplementation
@@ -24,6 +24,24 @@ public class PowerCardImplementation : ICardImplementation
             case "Draw":
                 game.NextDrawCard();
                 break;
+            case "NewRule":
+                var strategies = new List<ICardPlacementStrategy>
+            {
+                new AdjacentNumberPlacementStrategy(),
+                new ColorOnlyPlacementStrategy(),
+                new NumberOnlyPlacementStrategy(),
+                new UnoPlacementStrategy()
+            };
+
+            var random = new Random();
+            int index = random.Next(strategies.Count);
+
+            var randomStrategy = strategies[index];
+
+            Console.WriteLine($"New random placement strategy: {randomStrategy.GetType().Name}");
+
+            game.SetPlacementStrategy(randomStrategy);
+            break;
         }
     }
 
