@@ -1,48 +1,46 @@
 using Microsoft.AspNetCore.SignalR;
+using SignalRServer.Models;
 
 namespace SignalRServer.AnnoyingEffects;
 
 public class SoundEffectAdaptee
 {
-    // Key - player who is muted
-    // Value - list of players who muted the key player
-    private Dictionary<string, List<string>> mutedPlayers = new Dictionary<string, List<string>>();
+    private static readonly Logger logger = Logger.GetInstance();
+
+    private readonly Dictionary<string, List<string>> mutedPlayers = []; // key: muted player, value: list of players who muted him
 
     public async Task SendSoundEffect(IClientProxy player, IClientProxy caller, string playerUsername, string callerUsername)
     {
         if (mutedPlayers.ContainsKey(callerUsername) && mutedPlayers[callerUsername].Contains(playerUsername))
         {
             // Player is muted, do not send sound effect
-            Console.WriteLine($"{callerUsername} tried to annoy muted user {playerUsername} with sound effect, but they are muted.");
+            logger.LogInfo($"{callerUsername} tried to annoy muted user {playerUsername} with sound effect, but they are muted.");
             return;
         }
 
+        logger.LogInfo($"{callerUsername} is annoying user {playerUsername} with sound effect!");
         await player.SendAsync("PlaySound", "annoying.mp3");
-        // Placeholder implementation
-        Console.WriteLine($"{callerUsername} is annoying user {playerUsername} with sound effect!");
     }
 
     public async Task ToggleMutePlayer(string mutedPlayer, string mutingPlayer)
     {
         if (!mutedPlayers.ContainsKey(mutedPlayer))
         {
-            mutedPlayers[mutedPlayer] = new List<string>();
+            mutedPlayers[mutedPlayer] = [];
         }
 
         if (mutedPlayers[mutedPlayer].Contains(mutingPlayer))
         {
+            logger.LogInfo($"{mutingPlayer} has unmuted {mutedPlayer}.");
             mutedPlayers[mutedPlayer].Remove(mutingPlayer);
-            Console.WriteLine($"{mutingPlayer} has unmuted {mutedPlayer}.");
         }
         else
         {
+            logger.LogInfo($"{mutingPlayer} has muted {mutedPlayer}.");
             mutedPlayers[mutedPlayer].Add(mutingPlayer);
-            Console.WriteLine($"{mutingPlayer} has muted {mutedPlayer}.");
         }
 
-        Console.WriteLine($"Current muted players: {System.Text.Json.JsonSerializer.Serialize(mutedPlayers)}");
-
-
+        logger.LogInfo($"Current muted players: {System.Text.Json.JsonSerializer.Serialize(mutedPlayers)}");
         await Task.CompletedTask;
     }
 }

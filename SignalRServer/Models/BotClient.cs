@@ -1,12 +1,10 @@
-using System;
-using System.Threading.Tasks;
 using SignalRServer.Models.Game;
 
 namespace SignalRServer.Models;
 
-
 public class BotClient
 {
+    private static readonly Logger logger = Logger.GetInstance();
     public string userName;
     AbstractGame game;
     public Facade facade;
@@ -54,7 +52,7 @@ public class BotClient
 
             if (playableCard != null)
             {
-                Console.WriteLine($"{userName} (Bot) plays {playableCard.Color} {playableCard.Digit}");
+                logger.LogInfo($"{userName} (Bot) plays {playableCard.Color} {playableCard.Digit}");
                 await facade.PlayCard(game.RoomName, userName, playableCard, null);
 
                 // Brag about winning
@@ -65,10 +63,10 @@ public class BotClient
             }
             else
             {
-                Console.WriteLine($"{userName} (Bot) has no playable card and draws a card.");
+                logger.LogInfo($"{userName} (Bot) has no playable card and draws a card.");
                 await facade.DrawCard(game.RoomName, userName, null);
             }
-            Console.WriteLine($"{userName} has: {string.Join(", ", playerDeck.Cards.Select(c => c.Color + " " + c.Digit))}");
+            logger.LogInfo($"{userName} has: {string.Join(", ", playerDeck.Cards.Select(c => c.Color + " " + c.Digit))}");
         }
     }
 }

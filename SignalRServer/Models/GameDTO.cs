@@ -12,7 +12,7 @@ public class GameForSending
 
     public GameForSending(AbstractGame game, string userName)
     {
-        PlayerAmounts = new Dictionary<string, int>();
+        PlayerAmounts = [];
         foreach (PlayerDeck pDeck in game.PlayerDecks)
         {
             PlayerAmounts[pDeck.Username] = pDeck.Count;
