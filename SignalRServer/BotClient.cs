@@ -1,7 +1,8 @@
 using System;
 using System.Threading.Tasks;
+using SignalRServer.Models;
 
-namespace SignalRServer.Models
+namespace SignalRServer
 {
     public class BotClient
     {

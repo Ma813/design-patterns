@@ -6,7 +6,7 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace SignalRServer.Models.Chat
+namespace SignalRServer.Chat
 {
     public class Message
     {

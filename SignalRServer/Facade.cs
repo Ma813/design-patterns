@@ -4,9 +4,10 @@
 using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Helpers;
 using SignalRServer.Hubs;
-using SignalRServer.Models.Chat;
+using SignalRServer.Models;
+using SignalRServer.Chat;
 
-namespace SignalRServer.Models
+namespace SignalRServer
 {
     public class Facade
     {

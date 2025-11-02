@@ -1,6 +1,7 @@
 using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Hubs;
 using SignalRServer.Models;
+using SignalRServer;
 
 var builder = WebApplication.CreateBuilder(args);
 
