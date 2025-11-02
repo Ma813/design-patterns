@@ -9,6 +9,7 @@ public class GameForSending
     public string currentPlayer { get; set; }
     public int direction { get; set; }
     public PlayerDeck? PlayerDeck { get; set; } // The deck of the player requesting the game state
+    public Dictionary<string, int> CardCount { get; set; }
 
     public GameForSending(AbstractGame game, string userName)
     {
@@ -21,5 +22,6 @@ public class GameForSending
         currentPlayer = game.PlayerDecks[game.CurrentPlayerIndex].Username;
         direction = game.Direction;
         PlayerDeck = game.PlayerDecks.FirstOrDefault(pd => pd.Username == userName);
+        CardCount = game.PlacedCardCount;
     }
 }

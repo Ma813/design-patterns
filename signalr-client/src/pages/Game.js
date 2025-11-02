@@ -23,6 +23,7 @@ function App() {
     const [currentPlayer, setCurrentPlayer] = useState(null);
     const [error, setError] = useState(null);
     const [botCount, setBotCount] = useState(0);
+    const [cardCount, setCardCount] = useState([]);
     const location = useLocation();
     // Chat message state
     const [messages, setMessages] = useState([]);
@@ -68,6 +69,8 @@ function App() {
                 setTopCard(game.topCard);
                 setPlayerAmounts(game.playerAmounts);
                 setCurrentPlayer(game.currentPlayer);
+                setCardCount(game.cardCount);
+                console.log("aaaa", game.cardCount);
                 setError(null); // Clear previous errors
                 console.log("Game status updated:", game);
             });
@@ -82,6 +85,7 @@ function App() {
                 setPlayerAmounts(game.playerAmounts);
                 setTopCard(game.topCard);
                 setCurrentPlayer(game.currentPlayer);
+                setCardCount(game.cardCount);
             });
 
             newConnection.on("GameEnded", (message) => {
@@ -405,6 +409,17 @@ function App() {
                     <div className="deck-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         <h3>Deck:</h3>
                         <Deck deck={deck} onCardPlay={handleCardPlay} />
+                    </div>
+                )}
+
+                {started && cardCount && Object.keys(cardCount).length > 0 && (
+                    <div className="placed-card-count-container" style={{ margin: '20px 0', position: "absolute" }}>
+                        <h3>Placed Card Count:</h3>
+                        {Object.entries(cardCount).map(([cardType, amount]) => (
+                            <p key={cardType}>
+                                {cardType} placed {amount} times
+                            </p>
+                        ))}
                     </div>
                 )}
             </header>
