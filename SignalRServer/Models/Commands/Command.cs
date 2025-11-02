@@ -24,14 +24,25 @@ public abstract class Command
     {
         backup.Cards.Clear();
         foreach (UnoCard uc in pd.Cards) backup.AddCard(uc);
-        topCardBackup = UnoCard.GenerateCard();
+        if (game.TopCard is NumberCard nc)
+        {
+            topCardBackup = new NumberCard(game.TopCard.Color, nc.Digit);
+        }
+        else if (game.TopCard is PowerCard pc)
+        {
+            topCardBackup = new PowerCard(game.TopCard.Color, pc.PowerType);
+        }
+        else if (game.TopCard is CardDecorator wc)
+        {
+            topCardBackup = wc;
+        }
     }
 
     public void Undo()
     {
         pd.Cards.Clear();
         foreach (UnoCard uc in backup.Cards) pd.AddCard(uc);
-        game.TopCard = UnoCard.GenerateCard();
+        game.TopCard = topCardBackup;
     }
 
     public abstract override string ToString();
