@@ -5,10 +5,11 @@ namespace SignalRServer.Models.Chat;
 
 public partial class Message
 {
+    private static readonly Logger logger = Logger.GetInstance();
+
     public string Sender { get; set; }
     public string Text { get; set; }
     public DateTime Timestamp { get; set; }
-
     private static HashSet<string> BannedWords = new HashSet<string>();
     private static bool IsBannedWordsLoaded = false;
     private static readonly string BannedWordsUrl = "https://www.cs.cmu.edu/~biglou/resources/bad-words.txt";
@@ -54,7 +55,7 @@ public partial class Message
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Failed to load banned words: {ex.Message}");
+            logger.LogInfo($"Failed to load banned words: {ex.Message}");
             BannedWords = []; // fallback: empty set
         }
     }

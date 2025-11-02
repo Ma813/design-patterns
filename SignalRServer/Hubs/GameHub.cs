@@ -7,21 +7,26 @@ namespace SignalRServer.Hubs;
 //TODO rename to PlayerHub or PlayerClientHub
 public class GameHub : Hub
 {
+    private static readonly Logger logger = Logger.GetInstance();
+
     private readonly Facade facade;
+
     public GameHub(Facade facade)
     {
         // Dependency Injection
         this.facade = facade;
     }
+
     public async Task JoinRoom(string roomName, string userName, int botAmount = 0, string gameMode = "Classic", string cardPlacementStrategy = "UnoPlacementStrategy")
     {
 
-        Console.WriteLine($"User {userName} is joining room {roomName} with {botAmount} bots, game mode: {gameMode}, card placement strategy: {cardPlacementStrategy}");
+        logger.LogInfo($"User {userName} is joining room {roomName} with {botAmount} bots, game mode: {gameMode}, card placement strategy: {cardPlacementStrategy}");
         await facade.JoinRoom(roomName, userName, Clients, Context, Groups, botAmount, gameMode, cardPlacementStrategy);
     }
 
     public async Task StartGame(string roomName, string userName)
     {
+        logger.LogInfo($"User {userName} is starting game in room {roomName}");
         await facade.StartGame(roomName, userName, Clients);
     }
 

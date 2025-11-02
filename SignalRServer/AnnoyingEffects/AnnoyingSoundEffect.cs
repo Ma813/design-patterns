@@ -1,5 +1,4 @@
 using Microsoft.AspNetCore.SignalR;
-using SignalRServer.Models;
 
 namespace SignalRServer.AnnoyingEffects;
 
@@ -28,6 +27,7 @@ public class AnnoyingSoundEffect : IAnnoyingEffects
         {
             throw new ArgumentException("No players to annoy.", nameof(players));
         }
+
         foreach (var player in players)
         {
             await Annoy(player.Value, caller, player.Key, callerUsername);
