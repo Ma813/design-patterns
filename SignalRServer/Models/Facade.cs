@@ -2,13 +2,12 @@
 //It is a hub for managing player connections
 
 using Microsoft.AspNetCore.SignalR;
+using SignalRServer.Helpers;
 using SignalRServer.Hubs;
-using SignalRServer.Models.CardPlacementStrategies;
 using SignalRServer.Models.Chat;
 
 namespace SignalRServer.Models
 {
-    // TODO : make Facade into a singleton
     public class Facade
     {
         private static Facade? _instance = null;
@@ -38,17 +37,24 @@ namespace SignalRServer.Models
         {
             _hubContext = hubContext;
             annoyingSoundEffect = new AnnoyingSoundEffect(annoyingSoundAdaptee);
-        }   
+        }
 
-        public async Task JoinRoom(string roomName, string userName, IHubCallerClients Clients, HubCallerContext Context, IGroupManager Groups, int botAmount = 0, string gameMode = "Classic", string cardPlacementStrategy = "UnoPlacementStrategy")
+        public async Task JoinRoom(string roomName, string userName, IHubCallerClients Clients, HubCallerContext Context, IGroupManager Groups, int botAmount = 0, GameType gameMode = GameType.Classic, CardGeneratingMode cardGeneratingMode = CardGeneratingMode.Normal, StrategyType cardPlacementStrategy = StrategyType.Normal)
         {
             var connectionId = Context.ConnectionId;
 
-            // Remove user from previous room if any
-            if (UserRooms.ContainsKey(connectionId))
+            // Player is in the provided room
+            if (UserRooms.TryGetValue(connectionId, out string? room) && room == roomName)
             {
-                await Groups.RemoveFromGroupAsync(connectionId, UserRooms[connectionId]);
+                return;
             }
+
+            // Remove user from other rooms
+            if (UserRooms.TryGetValue(connectionId, out room))
+            {
+                await Groups.RemoveFromGroupAsync(connectionId, room);
+            }
+
 
             if (UserRooms.ContainsKey(connectionId) && UserRooms[connectionId] == roomName) //player is already in room
             {
@@ -56,30 +62,21 @@ namespace SignalRServer.Models
             }
 
             AbstractGame game;
-            if (Games.ContainsKey(roomName)) game = Games[roomName];
+            if (Games.TryGetValue(roomName, out AbstractGame? value))
+            {
+                game = value;
+            }
             else
             {
-                game = gameFactory.CreateGame(gameMode, roomName);
+                game = gameFactory.CreateGame(gameMode, cardGeneratingMode, cardPlacementStrategy, roomName);
                 Games[roomName] = game;
             }
 
             UsernameToConnectionId[userName] = connectionId;
 
-
-            ICardPlacementStrategy strategy = cardPlacementStrategy switch
-            {
-                "AdjacentNumberPlacementStrategy" => new AdjacentNumberPlacementStrategy(),
-                "ColorOnlyPlacementStrategy" => new ColorOnlyPlacementStrategy(),
-                "NumberOnlyPlacementStrategy" => new NumberOnlyPlacementStrategy(),
-                "UnoPlacementStrategy" => new UnoPlacementStrategy()
-            };
-
-            //  Set strategy on the game. If this isn't called or compatible, the strategy will be the standard Uno rule
-            game.SetPlacementStrategy(strategy);
-
             if (game.IsStarted)
             {
-                return; //Should return an errror later on
+                return; //Should return an error later on
             }
 
             game.Players[Context.ConnectionId] = userName;
@@ -100,41 +97,51 @@ namespace SignalRServer.Models
             }
 
             await Clients.Group(roomName).SendAsync("UserJoined", usernames);
+            Logger.GetInstance().LogInfo($"{userName} joined room {roomName} (connectionId: {connectionId})");
         }
 
-        public async Task StartGame(string roomName, string userName, IHubCallerClients? Clients)
+        public async Task StartGame(string roomName, IHubCallerClients Clients)
         {
             AbstractGame game = Games[roomName];
             game.Start();
 
             foreach (var player in game.Players)
             {
-                GameForSending gameForSeding = new GameForSending(game, player.Value);
+                GameDto gameForSending = new GameDto(game, player.Value);
 
-                await Clients.Client(player.Key).SendAsync("GameStarted", gameForSeding);
+                await Clients.Client(player.Key).SendAsync("GameStarted", gameForSending);
             }
         }
 
-        public async Task DrawCard(string roomName, string userName, IHubCallerClients<IClientProxy>? Clients)
+        public async Task DrawCard(string roomName, string userName)
         {
-            if (Clients == null)
-            {
-                Clients = (IHubCallerClients<IClientProxy>)new NullClients();
-            }
-
             AbstractGame game = Games[roomName];
             game.DrawCard(userName);
             await notifyPlayers(game);
         }
 
-        public async Task PlayCard(string roomName, string userName, UnoCard card, IHubCallerClients<IClientProxy>? Clients)
+        public async Task PlayCard(string roomName, string userName, CardDto cardDto, IHubCallerClients<IClientProxy>? Clients)
         {
             if (Clients == null)
             {
-                Clients = (IHubCallerClients<IClientProxy>)new NullClients();
+                Clients = new NullClients();
             }
 
             AbstractGame game = Games[roomName];
+            BaseCard card;
+            if (int.TryParse(cardDto.Name, out int number))
+            {
+                card = new NumberCard(cardDto.Color, number);
+            }
+            else
+            {
+                card = cardDto.Name switch
+                {
+                    "Reverse" => new ReverseCard(cardDto.Color),
+                    "Skip" => new SkipCard(cardDto.Color),
+                    _ => throw new InvalidOperationException($"Unknown card type: {cardDto.Name}"),
+                };
+            }
 
             string result = game.PlayCard(userName, card);
             if (result == "WIN")
@@ -236,7 +243,7 @@ namespace SignalRServer.Models
         {
             foreach (var player in game.Players)
             {
-                GameForSending gameForSending = new GameForSending(game, player.Value);
+                GameDto gameForSending = new GameDto(game, player.Value);
                 await _hubContext.Clients.Client(player.Key).SendAsync("GameStatus", gameForSending);
             }
 

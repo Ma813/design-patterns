@@ -45,15 +45,18 @@ namespace SignalRServer.Models
 
                 // Simple bot logic: draw a card if no playable card, else play the first playable card
                 var playerDeck = game.PlayerDecks.First(pd => pd.Username == userName);
-                // TODO Change logic to find a playable card to match ruleset
                 var playableCard = playerDeck.Cards.FirstOrDefault(card =>
-                    card.CanPlayOn(game.TopCard, game.GetPlacementStrategy())
+                    card.CanPlay(game.TopCard, game.GetPlacementStrategy())
                     );
 
                 if (playableCard != null)
                 {
-                    Console.WriteLine($"{userName} (Bot) plays {playableCard.Color} {playableCard.Digit}");
-                    await facade.PlayCard(game.RoomName, userName, playableCard, null);
+                    CardDto cardDto = new CardDto
+                    {
+                        Color = playableCard.Color,
+                        Name = playableCard.Name,
+                    };
+                    await facade.PlayCard(game.RoomName, userName, cardDto, null);
 
                     // Brag about winning
                     if (playerDeck.Cards.Count == 0)
@@ -64,9 +67,9 @@ namespace SignalRServer.Models
                 else
                 {
                     Console.WriteLine($"{userName} (Bot) has no playable card and draws a card.");
-                    await facade.DrawCard(game.RoomName, userName, null);
+                    await facade.DrawCard(game.RoomName, userName);
                 }
-                System.Console.WriteLine($"{userName} has: {string.Join(", ", playerDeck.Cards.Select(c => c.Color + " " + c.Digit))}");
+                System.Console.WriteLine($"{userName} has: {string.Join(", ", playerDeck.Cards.Select(c => c.Color + " " + c.Name))}");
 
 
             }
