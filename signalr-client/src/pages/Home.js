@@ -13,17 +13,29 @@ function Home() {
     const navigate = useNavigate();
 
     const joinRoom = () => {
-        console.log("joining with",placementStrategy)
+        console.log("joining with", placementStrategy)
         if (roomName) {
-            navigate(`/game/${roomName}`, { 
-                state: { 
-                    userName, 
+            navigate(`/game/${roomName}`, {
+                state: {
+                    userName,
                     gameMode,
                     placementStrategy,
                     gameTheme,
                     botCount
-                } 
+                }
             });
+        }
+    };
+    const joinRoomWithPreset = (presetType) => {
+        if (roomName) {
+            navigate(`/game/${roomName}`, {
+                state: {
+                    userName,
+                    presetType // we'll check this in Game.js to decide whether to call JoinRoomThroughDirector
+                }
+            });
+        } else {
+            alert("Please enter a room name first!");
         }
     };
 
@@ -31,7 +43,7 @@ function Home() {
         <div className="home-container">
             <div className="home-card">
                 <h1 className="home-title">Join a Room</h1>
-                
+
                 <div className="form-group">
                     <label htmlFor="userName" className="form-label">Your Name</label>
                     <input
@@ -125,6 +137,43 @@ function Home() {
                 >
                     Join Room
                 </button>
+                <div style={{ marginTop: '20px', textAlign: 'center' }}>
+                    <h3 style={{ marginBottom: '10px' }}>Or join using a preset:</h3>
+                    <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                        <button
+                            onClick={() => joinRoomWithPreset("Classic")}
+                            className="preset-button"
+                            style={{
+                                backgroundColor: '#4caf50',
+                                color: '#fff',
+                                padding: '10px 20px',
+                                borderRadius: '8px',
+                                border: 'none',
+                                fontWeight: 'bold',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Classic Preset
+                        </button>
+
+                        <button
+                            onClick={() => joinRoomWithPreset("Endless")}
+                            className="preset-button"
+                            style={{
+                                backgroundColor: '#2196f3',
+                                color: '#fff',
+                                padding: '10px 20px',
+                                borderRadius: '8px',
+                                border: 'none',
+                                fontWeight: 'bold',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Endless Preset
+                        </button>
+                    </div>
+                </div>
+
             </div>
         </div>
     );

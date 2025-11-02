@@ -46,13 +46,21 @@ function App() {
 
     useEffect(() => {
         if (roomName && userName) {
-            const gameMode = location.state?.gameMode || "Classic";
-            const placementStrategy = location.state?.placementStrategy || "Uno Standard";
-            const gameTheme = location.state?.gameTheme || "Classic";
+            const presetType = location.state?.presetType;
+            if (presetType) {
+                // Use the director/builder-based route
+                joinRoomWithPreset(presetType);
+            } else {
+                // Use the existing configurable join
+                const gameMode = location.state?.gameMode || "Classic";
+                const placementStrategy = location.state?.placementStrategy || "Uno Standard";
+                const gameTheme = location.state?.gameTheme || "Classic";
+                const botCount = parseInt(location.state?.botCount) || 0;
 
-            joinRoom(gameMode, placementStrategy, gameTheme, botCount);
+                joinRoom(gameMode, placementStrategy, gameTheme, botCount);
+            }
         }
-    }, [roomName, userName, botCount]);
+    }, [roomName, userName]);
 
 
     const connectToHub = async () => {
@@ -194,6 +202,24 @@ function App() {
             } catch (error) {
                 console.error('Join room failed:', error);
                 alert(`Join room failed: ${error.message}`);
+            }
+        }
+    };
+    const joinRoomWithPreset = async (presetType) => {
+        let activeConnection = connection;
+
+        if (!isConnected) {
+            activeConnection = await connectToHub();
+        }
+
+        if (activeConnection && roomName && userName) {
+            try {
+                await activeConnection.invoke("JoinRoomThroughDirector", roomName, userName, presetType);
+                setHasJoined(true);
+                console.log(`Joined room with preset: ${presetType}`);
+            } catch (error) {
+                console.error('Join with preset failed:', error);
+                alert(`Join with preset failed: ${error.message}`);
             }
         }
     };
