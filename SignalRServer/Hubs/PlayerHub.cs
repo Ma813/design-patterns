@@ -30,13 +30,11 @@ public class PlayerHub : Hub
     public async Task DrawCard(string roomName, string userName)
     {
         logger.LogInfo($"User {userName} is drawing a card in room {roomName}");
-        logger.LogInfo($"User {userName} is drawing a card in room {roomName}");
         await facade.DrawCard(roomName, userName, Clients);
     }
 
     public async Task<bool> PlayCard(string roomName, string userName, UnoCard card)
     {
-        logger.LogInfo($"User {userName} is playing a card in room {roomName}");
         logger.LogInfo($"User {userName} is playing a card in room {roomName}");
         bool result = await facade.PlayCard(roomName, userName, card, Clients);
         return result;
@@ -45,13 +43,11 @@ public class PlayerHub : Hub
     public async Task UndoCard(string roomName, string userName)
     {
         logger.LogInfo($"User {userName} is undoing a card in room {roomName}");
-        logger.LogInfo($"User {userName} is undoing a card in room {roomName}");
         await facade.UndoCard(roomName, userName, Clients);
     }
 
     public async Task AnnoyPlayers(string roomName, string message)
     {
-        logger.LogInfo($"All players annoyed in room {roomName}");
         logger.LogInfo($"All players annoyed in room {roomName}");
         await facade.AnnoyPlayers(roomName, message, Clients, Context);
     }
@@ -59,13 +55,11 @@ public class PlayerHub : Hub
     public async Task AnnoyPlayer(string roomName, string player, string message)
     {
         logger.LogInfo($"Player {player} annoyed in room {roomName}");
-        logger.LogInfo($"Player {player} annoyed in room {roomName}");
         await facade.AnnoyPlayer(roomName, player, message, Clients, Context);
     }
 
     public async Task ToggleMutePlayer(string roomname, string player)
     {
-        logger.LogInfo($"Player {player} muted/unmuted in room {roomname}");
         logger.LogInfo($"Player {player} muted/unmuted in room {roomname}");
         await facade.ToggleMutePlayer(roomname, player, Clients, Context);
     }
@@ -73,22 +67,20 @@ public class PlayerHub : Hub
     public async Task SendMessage(string roomName, string sender, string text)
     {
         logger.LogInfo($"User {sender} sent a message in room {roomName}: {text}");
-        logger.LogInfo($"User {sender} sent a message in room {roomName}: {text}");
         await facade.SendTextMessage(roomName, sender, text);
     }
 
     public async Task NextPlayer(string roomName, string actionType)
     {
-        logger.LogInfo($"Next player turn in room {roomName}");
-       
+
         logger.LogInfo($"Next player turn in room {roomName}");
         await facade.NextPlayer(roomName, actionType, Clients);
     }
-public async Task JoinRoomThroughDirector(string roomName, string userName, string builderType)
+    public async Task JoinRoomThroughDirector(string roomName, string userName, string builderType)
     {
-        
+
         await facade.JoinRoomThroughDirector(roomName, userName, builderType, Clients, Context, Groups);
-}
+    }
     // private async Task notifyPlayers(AbstractGame game)
     // {
     //     foreach (var player in game.Players)
@@ -100,6 +92,6 @@ public async Task JoinRoomThroughDirector(string roomName, string userName, stri
 
     // // Add this method to get current connection status
     // public string GetConnectionId() => Context.ConnectionId;
-        
-    
+
+
 }
