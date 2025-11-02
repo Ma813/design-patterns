@@ -25,6 +25,9 @@ function App() {
     const [botCount, setBotCount] = useState(0);
     const [cardCount, setCardCount] = useState([]);
     const location = useLocation();
+    const [actionMade, setActionMade] = useState(false);
+    const [action, setAction] = useState(0);
+    const [commandHistory, setCommandHistory] = useState([]);
     // Chat message state
     const [messages, setMessages] = useState([]);
 
@@ -70,7 +73,7 @@ function App() {
                 setPlayerAmounts(game.playerAmounts);
                 setCurrentPlayer(game.currentPlayer);
                 setCardCount(game.cardCount);
-                console.log("aaaa", game.cardCount);
+                setCommandHistory(game.commandHistory);
                 setError(null); // Clear previous errors
                 console.log("Game status updated:", game);
             });
@@ -194,15 +197,49 @@ function App() {
 
     async function handleCardPlay(card) {
         console.log("Card clicked:", card);
-        if (connection && started /*&& currentPlayer === userName*/) {
+        if (connection && started && !actionMade) {
             try {
-                await connection.invoke("PlayCard", roomName, userName, card);
+                const success = await connection.invoke("PlayCard", roomName, userName, card);
+                if (success) {
+                    setAction(1);
+                    setActionMade(true);
+                } else {
+                    console.warn("PlayCard failed — invalid move or server rejected it");
+                }
+                console.log("PlayCard invoked, success:", success);
             } catch (error) {
                 console.error("Play card failed:", error);
                 alert(`Play card failed: ${error.message}`);
             }
         }
     }
+
+    async function handleUndoCommand() {
+        if (connection && started) {
+            try {
+                await connection.invoke("UndoCard", roomName, userName);
+                setActionMade(false);
+            } catch (error) {
+                console.error("Undo card failed:", error);
+                alert(`Undo card failed: ${error.message}`);
+            }
+        }
+    }
+
+    // handle undo command and passing to next player
+    useEffect(() => {
+        let timer = null;
+        if (actionMade) {
+            timer = setTimeout(() => {
+                connection.invoke("NextPlayer", roomName, action.toString());
+                setActionMade(false);
+            }, 3000);
+        }
+
+        return () => {
+            clearTimeout(timer);
+        };
+    }, [actionMade]);
 
     // Cleanup on component unmount
     useEffect(() => {
@@ -372,13 +409,15 @@ function App() {
                     </div>
                 )}
 
-                {started && currentPlayer === userName && (
+                {started && currentPlayer === userName && !actionMade && (
                     <div className="draw-card-controls" style={{ margin: '20px 0' }}>
                         <button
                             onClick={async () => {
                                 if (connection) {
                                     try {
                                         await connection.invoke("DrawCard", roomName, userName);
+                                        setAction(0);
+                                        setActionMade(true);
                                     } catch (error) {
                                         console.error("Draw card failed:", error);
                                         alert(`Draw card failed: ${error.message}`);
@@ -421,6 +460,20 @@ function App() {
                             </p>
                         ))}
                     </div>
+                )}
+
+                {started && currentPlayer === userName && actionMade && (
+                    <div>
+                        <button onClick={handleUndoCommand}>Undo</button>
+                    </div>
+                )}
+
+                {commandHistory && (
+                    Object.entries(commandHistory).map((cmd) => (
+                        <p>
+                            {cmd}
+                        </p>
+                    ))
                 )}
             </header>
             {/* Chat Sidebar */}

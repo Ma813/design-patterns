@@ -130,7 +130,7 @@ public class Facade
         await notifyPlayers(game);
     }
 
-    public async Task PlayCard(string roomName, string userName, UnoCard card, IHubCallerClients<IClientProxy>? Clients)
+    public async Task<bool> PlayCard(string roomName, string userName, UnoCard card, IHubCallerClients<IClientProxy>? Clients)
     {
         if (Clients == null)
         {
@@ -143,8 +143,27 @@ public class Facade
         if (result == "WIN")
         {
             await _hubContext.Clients.Group(roomName).SendAsync("GameEnded", $"{userName} has won the game!");
-            return;
+            return true;
         }
+        if (result != "OK")
+        {
+            await Clients.Caller.SendAsync("Error", result);
+            return false;
+        }
+
+        await notifyPlayers(game);
+        return true;
+    }
+
+    public async Task UndoCard(string roomName, string userName, IHubCallerClients<IClientProxy>? Clients)
+    {
+        if (Clients == null)
+        {
+            Clients = (IHubCallerClients<IClientProxy>)new NullClients();
+        }
+
+        AbstractGame game = Games[roomName];
+        string result = game.UndoCard(userName);
         if (result != "OK")
         {
             await Clients.Caller.SendAsync("Error", result);
@@ -247,5 +266,12 @@ public class Facade
         {
             await bot.getNotified();
         }
+    }
+
+    public async Task NextPlayer(string roomName, string actionType, IHubCallerClients Clients, HubCallerContext Context)
+    {
+        AbstractGame game = Games[roomName];
+        game.NextPlayer((Action)int.Parse(actionType));
+        await notifyPlayers(game);
     }
 }

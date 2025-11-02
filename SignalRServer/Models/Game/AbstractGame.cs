@@ -43,7 +43,8 @@ public abstract class AbstractGame : ISubject
     public abstract void End();
     public abstract void DrawCard(string username);
     public abstract string PlayCard(string username, UnoCard card);
-    protected abstract void NextPlayer();
+    public abstract string UndoCard(string username);
+    public abstract void NextPlayer(Action action);
 
     public async Task NotifyBots()
     {

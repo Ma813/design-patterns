@@ -1,3 +1,4 @@
+using SignalRServer.Models.Commands;
 using SignalRServer.Models.Game;
 
 namespace SignalRServer.Models;
@@ -10,6 +11,7 @@ public class GameForSending
     public int direction { get; set; }
     public PlayerDeck? PlayerDeck { get; set; } // The deck of the player requesting the game state
     public Dictionary<string, int> CardCount { get; set; }
+    public List<string> commandHistory { get; set; } = [];
 
     public GameForSending(AbstractGame game, string userName)
     {
@@ -23,5 +25,9 @@ public class GameForSending
         direction = game.Direction;
         PlayerDeck = game.PlayerDecks.FirstOrDefault(pd => pd.Username == userName);
         CardCount = game.PlacedCardCount;
+        foreach (Command cmd in PlayerDeck.history.history)
+        {
+            commandHistory.Add(cmd.ToString());
+        }
     }
 }

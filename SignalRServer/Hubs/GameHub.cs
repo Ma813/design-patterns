@@ -35,9 +35,15 @@ public class GameHub : Hub
         await facade.DrawCard(roomName, userName, Clients);
     }
 
-    public async Task PlayCard(string roomName, string userName, UnoCard card)
+    public async Task<bool> PlayCard(string roomName, string userName, UnoCard card)
     {
-        await facade.PlayCard(roomName, userName, card, Clients);
+        bool result = await facade.PlayCard(roomName, userName, card, Clients);
+        return result;
+    }
+
+    public async Task UndoCard(string roomName, string userName)
+    {
+        await facade.UndoCard(roomName, userName, Clients);
     }
 
 
@@ -72,6 +78,11 @@ public class GameHub : Hub
     public async Task SendMessage(string roomName, string sender, string text)
     {
         await facade.SendTextMessage(roomName, sender, text);
+    }
+
+    public async Task NextPlayer(string roomName, string actionType)
+    {
+        await facade.NextPlayer(roomName, actionType, Clients, Context);
     }
 
     // private async Task notifyPlayers(AbstractGame game)

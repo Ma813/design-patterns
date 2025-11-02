@@ -1,9 +1,12 @@
+using SignalRServer.Models.Commands;
+
 namespace SignalRServer.Models;
 
 public class PlayerDeck
 {
     public List<UnoCard> Cards { get; private set; }
     public string Username { get; private set; }
+    public CommandHistory history = new(); 
 
     public PlayerDeck(string username)
     {
@@ -24,6 +27,21 @@ public class PlayerDeck
     public bool RemoveCard(UnoCard card)
     {
         return Cards.Remove(card);
+    }
+
+    public void ExecuteCommand(Command command)
+    {
+        if (command.Execute())
+        {
+            history.Push(command);
+        }
+    }
+
+    // Take the most recent command from history and run its undo method
+    public void Undo()
+    {
+        Command? command = history.Pop();
+        command?.Undo();
     }
 
     public int Count => Cards.Count;
