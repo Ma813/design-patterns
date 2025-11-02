@@ -87,7 +87,7 @@ public class Facade
 
         //  Set strategy on the game. If this isn't called or compatible, the strategy will be the standard Uno rule
         game.SetPlacementStrategy(strategy);
-        if(game.Players.Count == 0) game.ThemeFactory = themeFactory;
+        if (game.Players.Count == 0) game.ThemeFactory = themeFactory;
 
         if (game.IsStarted)
         {
@@ -104,7 +104,7 @@ public class Facade
         var usernames = game.Players.Values.ToArray();
 
         // Add bots
-        if(botAmount > 0)
+        if (botAmount > 0)
         {
             string botName = game.AddFirstBot();
             usernames = usernames.Append(botName).ToArray();
@@ -307,4 +307,29 @@ public class Facade
         game.NextPlayer((Action)int.Parse(actionType));
         await notifyPlayers(game);
     }
+    public AbstractGame GetGame(string roomName)
+    {
+        return Games.ContainsKey(roomName) ? Games[roomName] : null;
+    }
+    public async Task JoinRoomThroughDirector(string roomName, string userName, string builderType, IHubCallerClients Clients, HubCallerContext Context, IGroupManager Groups)
+    {
+        try
+        {
+            IGameBuilder builder = builderType switch
+            {
+                "Classic" => new ClassicUnoGameBuilder(this),
+                "Endless" => new EndlessAdjacentGameBuilder(this),
+                _ => throw new ArgumentException("Unknown builder type")
+            };
+
+            var director = new GameDirector(builder);
+            var game = await director.ConstructAsync(roomName, userName, Clients, Context, Groups);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"JoinRoomThroughDirector error: {ex}");
+            throw; // rethrow to see it in frontend HubException
+        }
+    }
+
 }

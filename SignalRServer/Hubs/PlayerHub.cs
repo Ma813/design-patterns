@@ -73,7 +73,26 @@ public class PlayerHub : Hub
 
     public async Task NextPlayer(string roomName, string actionType)
     {
+
         logger.LogInfo($"Next player turn in room {roomName}");
         await facade.NextPlayer(roomName, actionType, Clients);
     }
+    public async Task JoinRoomThroughDirector(string roomName, string userName, string builderType)
+    {
+
+        await facade.JoinRoomThroughDirector(roomName, userName, builderType, Clients, Context, Groups);
+    }
+    // private async Task notifyPlayers(AbstractGame game)
+    // {
+    //     foreach (var player in game.Players)
+    //     {
+    //         GameForSending gameForSending = new GameForSending(game, player.Value);
+    //         await Clients.Client(player.Key).SendAsync("GameStatus", gameForSending);
+    //     }
+    // }
+
+    // // Add this method to get current connection status
+    // public string GetConnectionId() => Context.ConnectionId;
+
+
 }
