@@ -4,13 +4,14 @@ namespace SignalRServer.Models;
 
 public class Game : AbstractGame
 {
-    public Game(CardGeneratingMode cardGeneratingMode, StrategyType placementStrategy) : base(cardGeneratingMode, placementStrategy)
+    public Game(CardGeneratingMode cardGeneratingMode, StrategyType placementStrategy, string roomName) : base(cardGeneratingMode, placementStrategy, roomName)
     {
     }
 }
 
 public abstract class AbstractGame
 {
+    public string RoomName { get; set; }
     public List<PlayerDeck> PlayerDecks { get; set; }
     public Dictionary<string, string> Players { get; set; } // Players Dictionary - key is connectionId, value is username
     public BaseCard TopCard { get; set; }
@@ -20,11 +21,13 @@ public abstract class AbstractGame
 
     protected ICardPlacementStrategy cardPlacementStrategy { get; set; }
     protected ICardFactory cardFactory;
+    public List<BotClient> Bots { get; set; } = new List<BotClient>();
 
     protected static readonly Logger logger = Logger.GetInstance();
 
-    protected AbstractGame(CardGeneratingMode cardGeneratingMode, StrategyType placementStrategy)
+    protected AbstractGame(CardGeneratingMode cardGeneratingMode, StrategyType placementStrategy, string roomName = "")
     {
+        RoomName = roomName;
         PlayerDecks = [];
         Players = [];
 
@@ -63,6 +66,11 @@ public abstract class AbstractGame
         logger.LogInfo("Game ended.");
     }
 
+    public ICardPlacementStrategy GetPlacementStrategy()
+    {
+        return cardPlacementStrategy;
+    }
+
     public virtual void DrawCard(string username)
     {
         var playerDeck = PlayerDecks.FirstOrDefault(pd => pd.Username == username);
@@ -96,6 +104,21 @@ public abstract class AbstractGame
         }
         NextPlayer();
         return "OK";
+    }
+
+    public async Task NotifyBots()
+    {
+        foreach (var bot in Bots)
+        {
+            await bot.getNotified();
+        }
+    }
+
+    public string AddBot()
+    {
+        var bot = new BotClient($"Bot{Bots.Count + 1}", this);
+        Bots.Add(bot);
+        return bot.userName;
     }
 
     public void NextPlayer()

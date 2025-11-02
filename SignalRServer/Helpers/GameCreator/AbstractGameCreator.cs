@@ -14,5 +14,7 @@ public abstract class AbstractGameCreator
     public abstract AbstractGame CreateGame(
         GameType gameMode = GameType.Classic,
         CardGeneratingMode cardGeneratingMode = CardGeneratingMode.Normal,
-        StrategyType cardPlacementStrategy = StrategyType.Normal);
+        StrategyType cardPlacementStrategy = StrategyType.Normal,
+        string roomName = "DefaultRoom"
+    );
 }

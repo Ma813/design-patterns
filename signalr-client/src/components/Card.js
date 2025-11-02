@@ -15,20 +15,20 @@ const Card = ({ card, onPlay }) => {
 
   useEffect(() => {
     setBg(colorMap[color.toLowerCase()] || "#d9d9d9");
-  }, [card.color]);
+  }, [card.Color]);
 
   const handleMouseEnter = () => {
-    switch (card.color) {
-      case "red":
+    switch (card.Color) {
+      case "Red":
         setBg("#ff7875");
         break;
-      case "green":
+      case "Green":
         setBg("#73d13d");
         break;
-      case "yellow":
+      case "Yellow":
         setBg("#ffd666");
         break;
-      case "blue":
+      case "Blue":
         setBg("#40a9ff");
         break;
       default:
@@ -37,6 +37,12 @@ const Card = ({ card, onPlay }) => {
   };
   const handleMouseLeave = () =>
     setBg(colorMap[color.toLowerCase()] || "#d9d9d9");
+
+  const handleClick = () => {
+    if (onPlay) {
+      onPlay(card);
+    }
+  };
 
   return (
     <div
@@ -58,7 +64,7 @@ const Card = ({ card, onPlay }) => {
       }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      onClick={onPlay}
+      onClick={handleClick}
     >
       {name}
     </div>

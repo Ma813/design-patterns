@@ -1,1 +1,148 @@
-.vs
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.js
+
+# testing
+/coverage
+
+# production
+/build
+
+# misc
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+### .NET ###
+# Build results
+[Bb]in/
+[Oo]bj/
+
+# VS files
+.vs/
+*.user
+*.suo
+
+# Rider / VS Code
+.idea/
+.vscode/
+
+# NuGet
+*.nupkg
+project.lock.json
+*.nuget.props
+*.nuget.targets
+
+# Logs
+*.log
+*.tlog
+
+# Temp files
+*.tmp
+*.cache
+*.pid
+*.seed
+*.swp
+
+# User-specific
+*.userosscache
+*.userprefs
+
+# Publish output
+wwwroot/dist/
+publish/
+out/
+
+### React / Node ###
+node_modules/
+build/
+dist/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.eslintcache
+
+### Misc ###
+.DS_Store
+Thumbs.db
+ehthumbs.db
+Icon?
+obj/*
+bin/*
+
+.fake
+
+## Build Folders
+bin/
+obj/
+out/
+
+## Visual Studio / Rider / IDE files
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+.idea/
+*.iml
+
+## Rider
+.idea/
+*.sln.iml
+
+## Mono Auto Generated Files
+mono_crash.*
+
+## Visual Studio Code
+.vscode/
+
+## ASP.NET / Web specific
+wwwroot/
+node_modules/
+
+## NuGet
+*.nupkg
+*.snupkg
+packages/
+.nuget/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+## Logs
+*.log
+
+## OS Generated Files
+.DS_Store
+Thumbs.db
+
+## Rider / JetBrains
+.idea/
+*.iws
+*.ipr
+*.iml
+
+## Temporary files
+*.tmp
+*.temp
+*.bak
+*.swp
+
+## Resharper
+_ReSharper*/
+*.DotSettings.user
+
+## Others
+*.cache
+*.pdb
+*.mdb
+*.opendb

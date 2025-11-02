@@ -10,10 +10,12 @@ public class PlayerDeck
         Cards = [];
         Username = username;
 
+
+        // Should probably use card factory here
         var random = new Random();
         for (int i = 0; i < 7; i++)
         {
-            BaseCard card = new NumberCard(((Colors)random.Next(0, 5)).ToString(), random.Next(0, 10));
+            BaseCard card = new NumberCard(((Colors)random.Next(0, 4)).ToString(), random.Next(0, 10));
             Cards.Add(card);
         }
     }

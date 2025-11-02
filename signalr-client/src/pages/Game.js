@@ -4,8 +4,12 @@ import * as signalR from "@microsoft/signalr";
 import Deck from "../components/Deck";
 import Card from "../components/Card";
 import "./Game.css";
+import PlayerCardInfo from "../components/PlayerInfoCard";
+import Chat from "../components/Chat";
 
 function App() {
+  // Chat sidebar state
+  const [isChatOpen, setIsChatOpen] = useState(true);
   const [connection, setConnection] = useState(null);
   const [roomName, setRoomName] = useState("");
   const [userName, setUserName] = useState("");
@@ -18,7 +22,7 @@ function App() {
   const [playerAmounts, setPlayerAmounts] = useState([]);
   const [currentPlayer, setCurrentPlayer] = useState(null);
   const [error, setError] = useState(null);
-
+  const [botCount, setBotCount] = useState(0);
   const location = useLocation();
 
   function normalizeCard(card) {
@@ -36,24 +40,29 @@ function App() {
       cards: (deck.Cards || deck.cards || []).map(normalizeCard),
     };
   }
+    // Chat message state
+    const [messages, setMessages] = useState([]);
 
   useEffect(() => {
     const urlParts = window.location.pathname.split("/");
     const room = urlParts[urlParts.length - 1];
     const name =
       location.state?.userName || `User${Math.floor(Math.random() * 10000)}`;
+    const botCount = parseInt(location.state?.botCount) || 0;
+
     setUserName(name);
     setRoomName(room);
+    setBotCount(botCount);
   }, []);
 
   useEffect(() => {
     if (roomName && userName) {
-      const gameMode = location.state?.gameMode || 0;
-      const cardGenerationMode = location.state?.cardGenerationMode || 0;
-      const placementStrategy = location.state?.placementStrategy || 0;
-      joinRoom(gameMode, cardGenerationMode, placementStrategy);
+      const gameMode = parseInt(location.state?.gameMode) || 0;
+      const cardGenerationMode = parseInt(location.state?.cardGenerationMode) || 0;
+      const placementStrategy = parseInt(location.state?.placementStrategy) || 0;
+      joinRoom(gameMode, cardGenerationMode, placementStrategy, botCount);
     }
-  }, [roomName, userName]);
+  }, [roomName, userName, botCount]);
 
   const connectToHub = async () => {
     try {
@@ -76,7 +85,7 @@ function App() {
       newConnection.on("GameStatus", (game) => {
         setDeck(normalizeDeck(game.playerDeck));
         setTopCard(normalizeCard(game.topCard));
-        setPlayerAmounts(game.playerAmounts);
+        setPlayerAmounts(game.playersCardsCounts);
         setCurrentPlayer(game.currentPlayer);
         setError(null);
         console.log("Game status updated:", game);
@@ -88,19 +97,19 @@ function App() {
         setStarted(true);
         setDeck(normalizeDeck(game.playerDeck));
         setTopCard(normalizeCard(game.topCard));
-        setPlayerAmounts(game.playerAmounts);
+        setPlayerAmounts(game.playersCardsCounts);
         setCurrentPlayer(game.currentPlayer);
       });
 
-      newConnection.on("GameEnded", (message) => {
-        console.log("Game ended:", message);
-        alert(`Game ended: ${message}`);
-        setStarted(false);
-        setDeck(null);
-        setPlayerAmounts([]);
-        setTopCard(null);
-        setCurrentPlayer(null);
-      });
+    newConnection.on("GameEnded", (message) => {
+      console.log("Game ended:", message);
+      alert(`Game ended: ${message}`);
+      setStarted(false);
+      setDeck(null);
+      setPlayerAmounts([]);
+      setTopCard(null);
+      setCurrentPlayer(null);
+            });
 
       newConnection.on("UserLeft", (message) => {
         console.log("User left:", message);
@@ -121,8 +130,23 @@ function App() {
         setIsConnected(true);
       });
 
+     
+      newConnection.on("Flashbang", () => {
+                alert("Flashbang effect triggered!");
+            });
+      newConnection.on("PlaySound", (file) => {
+                const audio = new Audio(`/sounds/${file}`);
+                console.log("Playing sound:", file);
+                audio.play();
+            });
       newConnection.on("Error", (message) => {
         setError(message);
+      });
+
+      // Chat message handler
+      newConnection.on("ReceiveMessage", (messageObj) => {
+        // messageObj is { sender, text, timestamp }
+        setMessages((prevMessages) => [...prevMessages, messageObj]);
       });
 
       await newConnection.start();
@@ -140,7 +164,7 @@ function App() {
     }
   };
 
-  const joinRoom = async (gameMode, cardGenerationMode, placementStrategy) => {
+  const joinRoom = async (gameMode, cardGenerationMode, placementStrategy, botCount) => {
     let activeConnection = connection;
 
     if (!isConnected) {
@@ -153,6 +177,7 @@ function App() {
           "JoinRoom",
           roomName,
           userName,
+          botCount,
           gameMode,
           cardGenerationMode,
           placementStrategy
@@ -194,6 +219,28 @@ function App() {
 
   return (
     <div className="Game">
+        {/* Chat Toggle Button */}
+      <button
+      //TODO move to .css file
+        style={{
+          position: "fixed",
+          top: 20,
+          right: isChatOpen ? 340 : 20,
+          zIndex: 2000,
+          backgroundColor: "#222",
+          color: "#fff",
+          border: "none",
+          borderRadius: "6px",
+          padding: "10px 18px",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.2)",
+          cursor: "pointer",
+          fontWeight: 600,
+          transition: "right 0.3s"
+                }}
+                onClick={() => setIsChatOpen(open => !open)}
+            >
+                {isChatOpen ? 'Close Chat' : 'Open Chat'}
+            </button>
       <header className="Game-header">
         <h1>DOS Game Room</h1>
 
@@ -232,30 +279,94 @@ function App() {
           </div>
         )}
 
-        {players && !started && (
-          <div className="players-container" style={{ margin: "20px 0" }}>
-            <h3>Players in Room:</h3>
-
-            {players.map((player, idx) => (
-              <p key={idx}>{player}</p>
-            ))}
-          </div>
-        )}
-
         {started && playerAmounts && Object.keys(playerAmounts).length > 0 && (
-          <div
-            className="player-amounts-container"
-            style={{ margin: "20px 0" }}
-          >
-            <h3>Player Card Amounts:</h3>
-            {Object.entries(playerAmounts).map(([playerName, amount]) => (
-              <p key={playerName}>
-                {playerName} {playerName === userName ? "(you)" : ""} has:{" "}
-                {amount} cards
-              </p>
-            ))}
-          </div>
-        )}
+                    <div className="player-amounts-container" style={{ margin: '20px 0' }}>
+                        <h3>Player Card Amounts:</h3>
+                        {Object.entries(playerAmounts).map(([playerName, amount]) => (
+                            <PlayerCardInfo
+                                key={playerName}
+                                playerName={playerName}
+                                amount={amount}
+                                isYou={playerName === userName}
+                                connection={connection}
+                                roomName={roomName}
+                            />
+                        ))}
+                    </div>
+                )}
+
+                {players && !started && (
+                    <div className="players-container" style={{ margin: '20px 0' }}>
+                        <h3>Players in Room:</h3>
+
+                        {players.map((player, idx) => (
+                            <p key={idx}>
+                                {player}
+                            </p>
+                        ))}
+                    </div>
+                )}
+
+                <div className="annoy-player-container" style={{ margin: '20px 0' }}>
+                    <button
+                        style={{
+                            backgroundColor: '#ff9800', // orange
+                            color: '#fff',
+                            fontWeight: 'bold',
+                            padding: '8px 16px',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            margin: '5px',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                            transition: 'all 0.15s ease-in-out'
+                        }}
+                        onMouseOver={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                        onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+                        onClick={async () => {
+                            if (connection) {
+                                try {
+                                    await connection.invoke("AnnoyPlayers", roomName, "flashbang");
+                                } catch (error) {
+                                    console.error("Annoy players failed:", error);
+                                    alert(`Annoy players failed: ${error.message}`);
+                                }
+                            }
+                        }}
+                    >
+                        Annoy All Players with Flashbang
+                    </button>
+                </div>
+                <div className="annoy-player-container" style={{ margin: '20px 0' }}>
+                    <button
+                        style={{
+                            backgroundColor: '#28a745', // green
+                            color: '#fff',
+                            fontWeight: 'bold',
+                            padding: '8px 16px',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            margin: '5px',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                            transition: 'all 0.15s ease-in-out'
+                        }}
+                        onMouseOver={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                        onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+                        onClick={async () => {
+                            if (connection) {
+                                try {
+                                    await connection.invoke("AnnoyPlayers", roomName, "soundeffect");
+                                } catch (error) {
+                                    console.error("Annoy players failed:", error);
+                                    alert(`Annoy players failed: ${error.message}`);
+                                }
+                            }
+                        }}
+                    >
+                        Annoy All Players with Sound Effect
+                    </button>
+                </div>
 
         {topCard && (
           <div
@@ -331,6 +442,33 @@ function App() {
           </div>
         )}
       </header>
+            {/* Chat Sidebar */}
+            <div
+                style={{
+                    position: 'fixed',
+                    top: 0,
+                    right: 0,
+                    width: 320,
+                    height: '100vh',
+                    background: '#fff',
+                    boxShadow: '-3px 0 20px rgba(0,0,0,0.15)',
+                    display: isChatOpen ? 'flex' : 'none',
+                    flexDirection: 'column',
+                    zIndex: 1500,
+                    borderLeft: '1px solid #e0e0e0',
+                    overflow: 'hidden',
+                    transition: 'opacity 0.3s ease-in-out'
+                }}
+            >
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                    <Chat
+                        connection={connection}
+                        roomName={roomName}
+                        userName={userName}
+                        messages={messages}
+                    />
+                </div>
+            </div>
     </div>
   );
 }

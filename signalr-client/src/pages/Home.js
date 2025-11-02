@@ -8,6 +8,7 @@ function Home() {
   const [gameMode, setGameMode] = useState(0);
   const [cardGenerationMode, setCardGenerationMode] = useState(0);
   const [placementStrategy, setPlacementStrategy] = useState(0);
+  const [botCount, setBotCount] = useState(0);
 
   const navigate = useNavigate();
 
@@ -19,6 +20,7 @@ function Home() {
           gameMode,
           cardGenerationMode,
           placementStrategy,
+          botCount
         },
       });
     }
@@ -100,6 +102,19 @@ function Home() {
             <option value="2">Face only</option>
             <option value="3">Adjacent Number</option>
           </select>
+        </div>
+        <div className="form-group">
+                    <label htmlFor="botCount" className="form-label">Number of Bots</label>
+                    <input
+                        id="botCount"
+                        type="number"
+                        min="0"
+                        max="10"
+                        placeholder="0"
+                        value={botCount}
+                        onChange={(e) => setBotCount(e.target.value)}
+                        className="form-input"
+                    />
         </div>
         <div>
           <label

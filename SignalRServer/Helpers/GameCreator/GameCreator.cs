@@ -9,13 +9,14 @@ public class GameCreator : AbstractGameCreator
     public override AbstractGame CreateGame(
         GameType gameMode = GameType.Classic,
         CardGeneratingMode cardGeneratingMode = CardGeneratingMode.Normal,
-        StrategyType cardPlacementStrategy = StrategyType.Normal)
+        StrategyType cardPlacementStrategy = StrategyType.Normal,
+        string roomName = "DefaultRoom")
     {
         return gameMode switch
         {
-            GameType.Classic => new Game(cardGeneratingMode, cardPlacementStrategy),
-            GameType.Endless => new EndlessGame(cardGeneratingMode, cardPlacementStrategy),
-            GameType.DrawToMatch => new DrawToMatchGame(cardGeneratingMode, cardPlacementStrategy),
+            GameType.Classic => new Game(cardGeneratingMode, cardPlacementStrategy, roomName),
+            GameType.Endless => new EndlessGame(cardGeneratingMode, cardPlacementStrategy, roomName),
+            GameType.DrawToMatch => new DrawToMatchGame(cardGeneratingMode, cardPlacementStrategy, roomName),
             _ => throw new ArgumentException("Invalid Game Mode")
         };
     }
