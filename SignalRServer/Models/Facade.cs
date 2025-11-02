@@ -7,6 +7,7 @@ using SignalRServer.Hubs;
 using SignalRServer.Models.CardPlacementStrategies;
 using SignalRServer.Models.Chat;
 using SignalRServer.Models.Game;
+using SignalRServer.Models.ThemeFactories;
 
 namespace SignalRServer.Models;
 
@@ -14,9 +15,9 @@ namespace SignalRServer.Models;
 public class Facade
 {
     private static Facade? _instance = null;
-    IHubContext<GameHub> _hubContext;
+    IHubContext<PlayerHub> _hubContext;
 
-    public static Facade GetInstance(IHubContext<GameHub> hubContext)
+    public static Facade GetInstance(IHubContext<PlayerHub> hubContext)
     {
         if (_instance == null)
         {
@@ -36,13 +37,13 @@ public class Facade
     private static readonly SoundEffectAdaptee annoyingSoundAdaptee = new SoundEffectAdaptee();
     AnnoyingFlashbang annoyingFlashbang = new AnnoyingFlashbang();
     AnnoyingSoundEffect annoyingSoundEffect;
-    public Facade(IHubContext<GameHub> hubContext)
+    public Facade(IHubContext<PlayerHub> hubContext)
     {
         _hubContext = hubContext;
         annoyingSoundEffect = new AnnoyingSoundEffect(annoyingSoundAdaptee);
     }
 
-    public async Task JoinRoom(string roomName, string userName, IHubCallerClients Clients, HubCallerContext Context, IGroupManager Groups, int botAmount = 0, string gameMode = "Classic", string cardPlacementStrategy = "UnoPlacementStrategy")
+    public async Task JoinRoom(string roomName, string userName, IHubCallerClients Clients, HubCallerContext Context, IGroupManager Groups, int botAmount = 0, string gameMode = "Classic", string cardPlacementStrategy = "UnoPlacementStrategy", string theme = "Classic")
     {
         var connectionId = Context.ConnectionId;
 
@@ -77,8 +78,15 @@ public class Facade
             _ => throw new NotImplementedException()
         };
 
+        IUnoThemeFactory themeFactory = theme.ToLower() switch
+        {
+            "halloween" => new HalloweenThemeFactory(),
+            _ => new ClassicThemeFactory()
+        };
+
         //  Set strategy on the game. If this isn't called or compatible, the strategy will be the standard Uno rule
         game.SetPlacementStrategy(strategy);
+        if(game.Players.Count == 0) game.ThemeFactory = themeFactory;
 
         if (game.IsStarted)
         {
@@ -103,6 +111,13 @@ public class Facade
         }
 
         await Clients.Group(roomName).SendAsync("UserJoined", usernames);
+        var themeInfo = new
+        {
+            cardDesign = game.ThemeFactory.CreateCardDesign().GetDesignInfo(),
+            background = game.ThemeFactory.CreateBackground().GetBackgroundInfo(),
+            sound = game.ThemeFactory.CreateSoundEffect().GetSoundInfo()
+        };
+        await Clients.Group(roomName).SendAsync("ThemeSelected", themeInfo);
     }
 
     public async Task StartGame(string roomName, string userName, IHubCallerClients? Clients)

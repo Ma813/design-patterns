@@ -1,7 +1,7 @@
 import React from 'react';
 import Card from './Card';
 
-export default function Deck({ deck, onCardPlay }) {
+export default function Deck({ deck, cardColors, onCardPlay }) {
     if (!deck || !deck.cards) return null;
 
     return (
@@ -11,6 +11,7 @@ export default function Deck({ deck, onCardPlay }) {
                     key={idx}
                     card={card}
                     onPlay={() => onCardPlay(card)}
+                    cardColors={cardColors}
                 />
             ))}
         </div>

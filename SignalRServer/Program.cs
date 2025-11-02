@@ -12,7 +12,7 @@ builder.Services.AddSwaggerGen();
 
 builder.Services.AddSingleton<Facade>(sp =>
 {
-    var hubContext = sp.GetRequiredService<IHubContext<GameHub>>();
+    var hubContext = sp.GetRequiredService<IHubContext<PlayerHub>>();
     return Facade.GetInstance(hubContext);
 });
 
@@ -42,6 +42,6 @@ app.UseCors("CorsPolicy");
 app.UseAuthorization();
 
 app.MapControllers();
-app.MapHub<GameHub>("/gameHub");
+app.MapHub<PlayerHub>("/gameHub");
 
 app.Run("http://localhost:5000");

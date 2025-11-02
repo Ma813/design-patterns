@@ -1,4 +1,5 @@
 using SignalRServer.Models.CardPlacementStrategies;
+using SignalRServer.Models.ThemeFactories;
 
 namespace SignalRServer.Models.Game;
 
@@ -13,6 +14,7 @@ public abstract class AbstractGame : ISubject
     public int Direction { get; set; } // 1 for clockwise, -1 for counter-clockwise
     public List<BotClient> Bots { get; set; } = [];
     protected ICardPlacementStrategy CardPlacementStrategy { get; set; }
+    public IUnoThemeFactory ThemeFactory { get; set; }
     public Dictionary<string, int> PlacedCardCount { get; set; }
 
     protected AbstractGame(string roomName)

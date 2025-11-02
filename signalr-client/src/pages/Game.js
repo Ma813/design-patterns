@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import './Game.css';
 import * as signalR from '@microsoft/signalr';
@@ -28,6 +28,8 @@ function App() {
     const [actionMade, setActionMade] = useState(false);
     const [action, setAction] = useState(0);
     const [commandHistory, setCommandHistory] = useState([]);
+    const soundTheme = useRef("annoying.mp3");
+    const [themeColors, setThemeColors] = useState(null);
     // Chat message state
     const [messages, setMessages] = useState([]);
 
@@ -46,8 +48,9 @@ function App() {
         if (roomName && userName) {
             const gameMode = location.state?.gameMode || "Classic";
             const placementStrategy = location.state?.placementStrategy || "Uno Standard";
+            const gameTheme = location.state?.gameTheme || "Classic";
 
-            joinRoom(gameMode, placementStrategy, botCount);
+            joinRoom(gameMode, placementStrategy, gameTheme, botCount);
         }
     }, [roomName, userName, botCount]);
 
@@ -76,6 +79,17 @@ function App() {
                 setCommandHistory(game.commandHistory);
                 setError(null); // Clear previous errors
                 console.log("Game status updated:", game);
+            });
+
+            newConnection.on("ThemeSelected", (themeData) => {
+                document.documentElement.style.setProperty(
+                    "--game-background",
+                    themeData.background
+                );
+                setThemeColors(themeData.cardDesign);
+                console.log("Applying theme:", themeData.sound);
+                soundTheme.current = themeData.sound;
+                console.log("Applying theme:", soundTheme);
             });
 
             newConnection.on('UserJoined', (players) => {
@@ -123,9 +137,9 @@ function App() {
             newConnection.on('Flashbang', () => {
                 alert('Flashbang effect triggered!');
             });
-            newConnection.on('PlaySound', (file) => {
-                const audio = new Audio(`/sounds/${file}`);
-                console.log("Playing sound:", file);
+            newConnection.on('PlaySound', () => {
+                const audio = new Audio(`/sounds/${soundTheme.current}`);
+                console.log("Playing sound:", soundTheme.current);
                 audio.play();
             });
             newConnection.on('Error', (message) => {
@@ -165,7 +179,7 @@ function App() {
         }
     };
 
-    const joinRoom = async (gameMode, placementStrategy, botCount) => {
+    const joinRoom = async (gameMode, placementStrategy, gameTheme, botCount) => {
         let activeConnection = connection;
 
         if (!isConnected) {
@@ -174,7 +188,7 @@ function App() {
 
         if (activeConnection && roomName && userName) {
             try {
-                await activeConnection.invoke('JoinRoom', roomName, userName, botCount, gameMode, placementStrategy);
+                await activeConnection.invoke('JoinRoom', roomName, userName, botCount, gameMode, placementStrategy, gameTheme);
                 setHasJoined(true);
                 console.log('Joined room:', roomName);
             } catch (error) {
@@ -399,7 +413,7 @@ function App() {
 
                 {topCard && (
                     <div className="top-card-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <Card card={topCard} />
+                        <Card card={topCard} cardColors={themeColors} />
                     </div>
                 )}
 
@@ -447,7 +461,7 @@ function App() {
                 {deck && (
                     <div className="deck-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         <h3>Deck:</h3>
-                        <Deck deck={deck} onCardPlay={handleCardPlay} />
+                        <Deck deck={deck} onCardPlay={handleCardPlay} cardColors={themeColors} />
                     </div>
                 )}
 
