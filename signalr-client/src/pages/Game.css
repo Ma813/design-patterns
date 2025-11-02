@@ -3,7 +3,7 @@
 }
 
 .Game-header {
-    background-color: #282c34;
+    background-color: var(--game-background, #282c34);
     padding: 20px;
     color: white;
     min-height: 100vh;

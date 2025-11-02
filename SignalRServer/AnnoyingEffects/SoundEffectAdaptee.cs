@@ -19,7 +19,7 @@ public class SoundEffectAdaptee
         }
 
         logger.LogInfo($"{callerUsername} is annoying user {playerUsername} with sound effect!");
-        await player.SendAsync("PlaySound", "annoying.mp3");
+        await player.SendAsync("PlaySound");
     }
 
     public async Task ToggleMutePlayer(string mutedPlayer, string mutingPlayer)

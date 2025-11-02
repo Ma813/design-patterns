@@ -7,6 +7,7 @@ function Home() {
     const [roomName, setRoomName] = useState('');
     const [gameMode, setGameMode] = useState("Classic");
     const [placementStrategy, setPlacementStrategy] = useState("UnoPlacementStrategy");
+    const [gameTheme, setGameTheme] = useState("Classic");
     const [botCount, setBotCount] = useState(0);
 
     const navigate = useNavigate();
@@ -19,6 +20,7 @@ function Home() {
                     userName, 
                     gameMode,
                     placementStrategy,
+                    gameTheme,
                     botCount
                 } 
             });
@@ -92,6 +94,19 @@ const joinRoomWithPreset = (presetType) => {
                         <option value="AdjacentNumberPlacementStrategy">Adjacent Number</option>
                         <option value="ColorOnlyPlacementStrategy">Color Only</option>
                         <option value="NumberOnlyPlacementStrategy">Number Only</option>
+                    </select>
+                </div>
+
+                <div className="form-group">
+                    <label htmlFor="gameTheme" className="form-label">Game Theme</label>
+                    <select
+                        id="gameTheme"
+                        className="form-input"
+                        value={gameTheme}
+                        onChange={(e) => setGameTheme(e.target.value)}
+                    >
+                        <option value="Classic">Classic</option>
+                        <option value="Halloween">Halloween</option>
                     </select>
                 </div>
 

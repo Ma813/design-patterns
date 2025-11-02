@@ -7,15 +7,17 @@ using SignalRServer.Hubs;
 using SignalRServer.Models.CardPlacementStrategies;
 using SignalRServer.Models.Chat;
 using SignalRServer.Models.Game;
+using SignalRServer.Models.ThemeFactories;
+
 namespace SignalRServer.Models;
 
 // TODO : make Facade into a singleton
 public class Facade
 {
     private static Facade? _instance = null;
-    IHubContext<GameHub> _hubContext;
+    IHubContext<PlayerHub> _hubContext;
 
-    public static Facade GetInstance(IHubContext<GameHub> hubContext)
+    public static Facade GetInstance(IHubContext<PlayerHub> hubContext)
     {
         if (_instance == null)
         {
@@ -35,13 +37,13 @@ public class Facade
     private static readonly SoundEffectAdaptee annoyingSoundAdaptee = new SoundEffectAdaptee();
     AnnoyingFlashbang annoyingFlashbang = new AnnoyingFlashbang();
     AnnoyingSoundEffect annoyingSoundEffect;
-    public Facade(IHubContext<GameHub> hubContext)
+    public Facade(IHubContext<PlayerHub> hubContext)
     {
         _hubContext = hubContext;
         annoyingSoundEffect = new AnnoyingSoundEffect(annoyingSoundAdaptee);
     }
 
-    public async Task JoinRoom(string roomName, string userName, IHubCallerClients Clients, HubCallerContext Context, IGroupManager Groups, int botAmount = 0, string gameMode = "Classic", string cardPlacementStrategy = "UnoPlacementStrategy")
+    public async Task JoinRoom(string roomName, string userName, IHubCallerClients Clients, HubCallerContext Context, IGroupManager Groups, int botAmount = 0, string gameMode = "Classic", string cardPlacementStrategy = "UnoPlacementStrategy", string theme = "Classic")
     {
         var connectionId = Context.ConnectionId;
 
@@ -76,8 +78,15 @@ public class Facade
             _ => throw new NotImplementedException()
         };
 
+        IUnoThemeFactory themeFactory = theme.ToLower() switch
+        {
+            "halloween" => new HalloweenThemeFactory(),
+            _ => new ClassicThemeFactory()
+        };
+
         //  Set strategy on the game. If this isn't called or compatible, the strategy will be the standard Uno rule
         game.SetPlacementStrategy(strategy);
+        if(game.Players.Count == 0) game.ThemeFactory = themeFactory;
 
         if (game.IsStarted)
         {
@@ -94,14 +103,27 @@ public class Facade
         var usernames = game.Players.Values.ToArray();
 
         // Add bots
-        for (int i = 1; i <= botAmount; i++)
+        if(botAmount > 0)
         {
-            string botName = game.AddBot();
+            string botName = game.AddFirstBot();
+            usernames = usernames.Append(botName).ToArray();
+            game.Players[$"bot-{botName}"] = botName;
+        }
+        for (int i = 2; i <= botAmount; i++)
+        {
+            string botName = game.AddNextBots();
             usernames = usernames.Append(botName).ToArray();
             game.Players[$"bot-{botName}"] = botName;
         }
 
         await Clients.Group(roomName).SendAsync("UserJoined", usernames);
+        var themeInfo = new
+        {
+            cardDesign = game.ThemeFactory.CreateCardDesign().GetDesignInfo(),
+            background = game.ThemeFactory.CreateBackground().GetBackgroundInfo(),
+            sound = game.ThemeFactory.CreateSoundEffect().GetSoundInfo()
+        };
+        await Clients.Group(roomName).SendAsync("ThemeSelected", themeInfo);
     }
 
     public async Task StartGame(string roomName, string userName, IHubCallerClients? Clients)
@@ -253,7 +275,7 @@ public class Facade
         await message.SendMessageAsync(_hubContext.Clients.Group(roomName));
     }
 
-    private async Task notifyPlayers(AbstractGame game)
+    public async Task notifyPlayers(AbstractGame game)
     {
         foreach (var player in game.Players)
         {
@@ -269,6 +291,10 @@ public class Facade
 
     public async Task NextPlayer(string roomName, string actionType,IHubCallerClients<IClientProxy>? Clients)
     {
+        if (Clients == null)
+        {
+            Clients = (IHubCallerClients<IClientProxy>)new NullClients();
+        }
         AbstractGame game = Games[roomName];
         game.NextPlayer((Action)int.Parse(actionType));
         await notifyPlayers(game);
