@@ -82,9 +82,12 @@ public class GameHub : Hub
 
     public async Task NextPlayer(string roomName, string actionType)
     {
-        await facade.NextPlayer(roomName, actionType, Clients, Context);
+        await facade.NextPlayer(roomName, actionType, Clients);
     }
-
+public async Task JoinRoomThroughDirector(string roomName, string userName, string builderType)
+    {
+        await facade.JoinRoomThroughDirector(roomName, userName, builderType, Clients, Context, Groups);
+}
     // private async Task notifyPlayers(AbstractGame game)
     // {
     //     foreach (var player in game.Players)

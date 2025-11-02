@@ -24,6 +24,18 @@ function Home() {
             });
         }
     };
+const joinRoomWithPreset = (presetType) => {
+    if (roomName) {
+        navigate(`/game/${roomName}`, { 
+            state: { 
+                userName,
+                presetType // we'll check this in Game.js to decide whether to call JoinRoomThroughDirector
+            } 
+        });
+    } else {
+        alert("Please enter a room name first!");
+    }
+};
 
     return (
         <div className="home-container">
@@ -110,6 +122,43 @@ function Home() {
                 >
                     Join Room
                 </button>
+                <div style={{ marginTop: '20px', textAlign: 'center' }}>
+    <h3 style={{ marginBottom: '10px' }}>Or join using a preset:</h3>
+    <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+        <button
+            onClick={() => joinRoomWithPreset("Classic")}
+            className="preset-button"
+            style={{
+                backgroundColor: '#4caf50',
+                color: '#fff',
+                padding: '10px 20px',
+                borderRadius: '8px',
+                border: 'none',
+                fontWeight: 'bold',
+                cursor: 'pointer'
+            }}
+        >
+            Classic Preset
+        </button>
+
+        <button
+            onClick={() => joinRoomWithPreset("Endless")}
+            className="preset-button"
+            style={{
+                backgroundColor: '#2196f3',
+                color: '#fff',
+                padding: '10px 20px',
+                borderRadius: '8px',
+                border: 'none',
+                fontWeight: 'bold',
+                cursor: 'pointer'
+            }}
+        >
+            Endless Preset
+        </button>
+    </div>
+</div>
+
             </div>
         </div>
     );

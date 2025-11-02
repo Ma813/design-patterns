@@ -7,7 +7,6 @@ using SignalRServer.Hubs;
 using SignalRServer.Models.CardPlacementStrategies;
 using SignalRServer.Models.Chat;
 using SignalRServer.Models.Game;
-
 namespace SignalRServer.Models;
 
 // TODO : make Facade into a singleton
@@ -268,10 +267,35 @@ public class Facade
         }
     }
 
-    public async Task NextPlayer(string roomName, string actionType, IHubCallerClients Clients, HubCallerContext Context)
+    public async Task NextPlayer(string roomName, string actionType,IHubCallerClients<IClientProxy>? Clients)
     {
         AbstractGame game = Games[roomName];
         game.NextPlayer((Action)int.Parse(actionType));
         await notifyPlayers(game);
     }
+    public AbstractGame GetGame(string roomName)
+{
+    return Games.ContainsKey(roomName) ? Games[roomName] : null;
+}
+public async Task JoinRoomThroughDirector(string roomName, string userName, string builderType, IHubCallerClients Clients, HubCallerContext Context, IGroupManager Groups)
+{
+        try
+        {
+            IGameBuilder builder = builderType switch
+            {
+                "Classic" => new ClassicUnoGameBuilder(this),
+                "Endless" => new EndlessAdjacentGameBuilder(this),
+                _ => throw new ArgumentException("Unknown builder type")
+            };
+
+            var director = new GameDirector(builder);
+            var game = await director.ConstructAsync(roomName, userName, Clients, Context, Groups);
+        }
+      catch (Exception ex)
+    {
+        Console.WriteLine($"JoinRoomThroughDirector error: {ex}");
+        throw; // rethrow to see it in frontend HubException
+    }
+}
+
 }
