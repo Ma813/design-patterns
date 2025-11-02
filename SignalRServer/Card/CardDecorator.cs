@@ -2,7 +2,7 @@ using SignalRServer.Models.CardPlacementStrategies;
 
 namespace SignalRServer.Card;
 
-public abstract class CardDecorator : UnoCard, ICardDecorator
+public abstract class CardDecorator : UnoCard
 {
     protected UnoCard decoratedCard;
 
