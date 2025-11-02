@@ -103,9 +103,15 @@ public class Facade
         var usernames = game.Players.Values.ToArray();
 
         // Add bots
-        for (int i = 1; i <= botAmount; i++)
+        if(botAmount > 0)
         {
-            string botName = game.AddBot();
+            string botName = game.AddFirstBot();
+            usernames = usernames.Append(botName).ToArray();
+            game.Players[$"bot-{botName}"] = botName;
+        }
+        for (int i = 2; i <= botAmount; i++)
+        {
+            string botName = game.AddNextBots();
             usernames = usernames.Append(botName).ToArray();
             game.Players[$"bot-{botName}"] = botName;
         }
@@ -269,7 +275,7 @@ public class Facade
         await message.SendMessageAsync(_hubContext.Clients.Group(roomName));
     }
 
-    private async Task notifyPlayers(AbstractGame game)
+    public async Task notifyPlayers(AbstractGame game)
     {
         foreach (var player in game.Players)
         {
@@ -283,8 +289,12 @@ public class Facade
         }
     }
 
-    public async Task NextPlayer(string roomName, string actionType, IHubCallerClients Clients, HubCallerContext Context)
+    public async Task NextPlayer(string roomName, string actionType, IHubCallerClients<IClientProxy>? Clients)
     {
+        if (Clients == null)
+        {
+            Clients = (IHubCallerClients<IClientProxy>)new NullClients();
+        }
         AbstractGame game = Games[roomName];
         game.NextPlayer((Action)int.Parse(actionType));
         await notifyPlayers(game);

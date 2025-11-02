@@ -12,7 +12,7 @@ public abstract class AbstractGame : ISubject
     public bool IsStarted { get; set; }
     public int CurrentPlayerIndex { get; set; }
     public int Direction { get; set; } // 1 for clockwise, -1 for counter-clockwise
-    public List<BotClient> Bots { get; set; } = [];
+    public List<IBotClientPrototype> Bots { get; set; } = [];
     protected ICardPlacementStrategy CardPlacementStrategy { get; set; }
     public IUnoThemeFactory ThemeFactory { get; set; }
     public Dictionary<string, int> PlacedCardCount { get; set; }
@@ -56,11 +56,19 @@ public abstract class AbstractGame : ISubject
         }
     }
 
-    public string AddBot()
+    public string AddFirstBot()
     {
         var bot = new BotClient($"Bot{Bots.Count + 1}", this);
         Bots.Add(bot);
-        return bot.userName;
+        return bot.UserName;
+    }
+
+    public string AddNextBots()
+    {
+        var botPrototype = Bots[0];
+        var newBot = botPrototype.Clone($"Bot{Bots.Count + 1}");
+        Bots.Add(newBot);
+        return newBot.UserName;
     }
 
     public void AttachObservers()

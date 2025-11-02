@@ -73,6 +73,6 @@ public class PlayerHub : Hub
     public async Task NextPlayer(string roomName, string actionType)
     {
         logger.LogInfo($"Next player turn in room {roomName}");
-        await facade.NextPlayer(roomName, actionType, Clients, Context);
+        await facade.NextPlayer(roomName, actionType, Clients);
     }
 }
