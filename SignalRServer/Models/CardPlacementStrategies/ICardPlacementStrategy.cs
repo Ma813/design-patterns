@@ -1,8 +1,7 @@
-namespace SignalRServer.Models.CardPlacementStrategies
-{
-    public interface ICardPlacementStrategy
-    {
-        bool CanPlaceCard(UnoCard topCard, UnoCard candidateCard);
+namespace SignalRServer.Models.CardPlacementStrategies;
 
-    }
+public interface ICardPlacementStrategy
+{
+    bool CanPlaceCard(UnoCard topCard, UnoCard candidateCard);
+
 }

@@ -1,11 +1,11 @@
-namespace SignalRServer.Models.CardPlacementStrategies
+namespace SignalRServer.Models.CardPlacementStrategies;
+
+public class UnoPlacementStrategy : ICardPlacementStrategy
 {
-    public class UnoPlacementStrategy : ICardPlacementStrategy
+    public bool CanPlaceCard(UnoCard topCard, UnoCard candidateCard)
     {
-        public bool CanPlaceCard(UnoCard topCard, UnoCard candidateCard)
-        {
-            return candidateCard.Color == topCard.Color
-                || candidateCard.Digit == topCard.Digit;
-        }
+        return candidateCard.Color == topCard.Color
+            || candidateCard.Digit == topCard.Digit;
     }
 }
+
