@@ -1,32 +1,63 @@
+using System.Runtime.CompilerServices;
 using SignalRServer.Models.Game;
-
 namespace SignalRServer.Models;
 
 public class BotClient : IBotClientPrototype
 {
     private static readonly Logger logger = Logger.GetInstance();
+    private static int _instanceCounter = 0;
+    private readonly int _instanceId; // Track instance number 
     public string UserName { get; private set; }
+    public int DifficultyLevel { get; private set; }
+    public string Strategy { get; private set; }
     private AbstractGame game;
     public Facade facade;
 
-    private BotClient(string userName, AbstractGame game, Facade facade)
+    private BotClient(string userName, AbstractGame game, Facade facade, int difficultyLevel, string strategy)
     {
+        _instanceId = ++_instanceCounter;
         UserName = userName;
         this.game = game;
         this.facade = facade;
+        DifficultyLevel = difficultyLevel;
+        Strategy = strategy;
+        logger.LogInfo($"Created BotClient #{_instanceId}: {UserName} (Memory: {GetMemoryInfo(this)})");
     }
 
-    public BotClient(string userName, AbstractGame game)
+    public BotClient(string userName, AbstractGame game, int difficultyLevel = 1, string strategy = "Basic")
     {
+        _instanceId = ++_instanceCounter;
         UserName = userName;
         this.game = game;
-        facade = Facade.GetInstance(null!); // Hacky way to get Facade instance
-                                            // It's okay, because the GameHub will always create the Facade first with a valid hub context
+        facade = Facade.GetInstance(null!); // Hacky way to get Facade instance 
+                                            // It's okay, because the GameHub will always create the Facade first with a valid hub context 
+        DifficultyLevel = difficultyLevel;
+        Strategy = strategy;
+        logger.LogInfo($"Created BotClient #{_instanceId}: {UserName} (Memory: {GetMemoryInfo(this)})");
     }
 
     public IBotClientPrototype Clone(string newUserName)
     {
-        return new BotClient(newUserName, game, facade);
+        logger.LogInfo($"Cloning {UserName} -> {newUserName}");
+        logger.LogInfo($"Original: {GetMemoryInfo(this)}");
+
+        var clone = new BotClient(newUserName, game, facade, DifficultyLevel, Strategy);
+
+        logger.LogInfo($"Clone: {GetMemoryInfo(clone)}");
+        logger.LogInfo($"Same object? {ReferenceEquals(this, clone)}");
+        return clone;
+    }
+
+    private static string GetMemoryInfo(object obj)
+    {
+        return $"Hash: 0x{obj.GetHashCode():X8}, RefEquals: {GetReferenceId(obj)}";
+    }
+
+    private static string GetReferenceId(object obj)
+    {
+        // This gives a consistent identifier for the same reference 
+
+        return RuntimeHelpers.GetHashCode(obj).ToString("X8");
     }
 
     private async Task SendRandomMessageChanceAsync()
@@ -40,7 +71,7 @@ public class BotClient : IBotClientPrototype
                 "I hope I get a good card!",
                 "This is getting interesting.",
                 "Watch out, here I come!",
-                "Ur a communist!" //Should be censored
+                "Ur a communist!" //Should be censored 
             };
             var message = messages[random.Next(messages.Length)];
             await facade.SendTextMessage(game.RoomName, UserName, message);
