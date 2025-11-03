@@ -60,7 +60,8 @@ public class Game : AbstractGame
         var playerDeck = PlayerDecks.FirstOrDefault(pd => pd.Username == username);
         if (playerDeck == null) return "Player not found";
 
-        playerDeck.ExecuteCommand(new UndoCardCommand(this, playerDeck));
+        playerDeck.Undo();
+        //playerDeck.ExecuteCommand(new UndoCardCommand(this, playerDeck));
         return "OK";
     }
 

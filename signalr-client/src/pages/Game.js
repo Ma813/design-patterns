@@ -492,30 +492,39 @@ function App() {
                     </div>
                 )}
 
-                {started && cardCount && Object.keys(cardCount).length > 0 && (
-                    <div className="placed-card-count-container" style={{ margin: '20px 0', position: "absolute" }}>
-                        <h3>Placed Card Count:</h3>
-                        {Object.entries(cardCount).map(([cardType, amount]) => (
-                            <p key={cardType}>
-                                {cardType} placed {amount} times
-                            </p>
-                        ))}
+                {started && (
+                    <div className="bottom-panel">
+                        {/* Card Count - Left Half */}
+                        {cardCount && Object.keys(cardCount).length > 0 && (
+                        <div className="placed-card-count-container">
+                            <h3>Placed Card Count</h3>
+                            <div className="card-count-list">
+                            {Object.entries(cardCount).map(([cardType, amount]) => (
+                                <div key={cardType} className="card-count-item">
+                                <span className="card-type">{cardType}</span>
+                                <span className="card-amount">×{amount}</span>
+                                </div>
+                            ))}
+                            </div>
+                        </div>
+                        )}
+
+                        {/* Command History - Right Half */}
+                        {commandHistory && Object.entries(commandHistory).length > 0 && (
+                        <div className="command-history">
+                            <h3>Command History</h3>
+                            <div className="command-list">
+                            {Object.entries(commandHistory).map(([key, cmd]) => (
+                                <div key={key} className="command-item">
+                                {cmd}
+                                </div>
+                            ))}
+                            </div>
+                        </div>
+                        )}
                     </div>
                 )}
 
-                {started && currentPlayer === userName && actionMade && (
-                    <div>
-                        <button onClick={handleUndoCommand}>Undo</button>
-                    </div>
-                )}
-
-                {commandHistory && (
-                    Object.entries(commandHistory).map((cmd) => (
-                        <p>
-                            {cmd}
-                        </p>
-                    ))
-                )}
             </header>
             {/* Chat Sidebar */}
             <div
