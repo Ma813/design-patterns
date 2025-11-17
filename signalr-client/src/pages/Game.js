@@ -1,11 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import './Game.css';
 import * as signalR from '@microsoft/signalr';
 import Deck from '../components/Deck';
 import Card from '../components/Card'
+import PlayerCardInfo from '../components/PlayerInfoCard';
+import Chat from '../components/Chat';
 
 function App() {
+    // Chat sidebar state
+    const [isChatOpen, setIsChatOpen] = useState(true);
     const [connection, setConnection] = useState(null);
     const [roomName, setRoomName] = useState('');
     const [userName, setUserName] = useState('');
@@ -18,20 +22,43 @@ function App() {
     const [playerAmounts, setPlayerAmounts] = useState([]);
     const [currentPlayer, setCurrentPlayer] = useState(null);
     const [error, setError] = useState(null);
-
+    const [botCount, setBotCount] = useState(0);
+    const [cardCount, setCardCount] = useState([]);
     const location = useLocation();
+    const [actionMade, setActionMade] = useState(false);
+    const [action, setAction] = useState(0);
+    const [commandHistory, setCommandHistory] = useState([]);
+    const soundTheme = useRef("annoying.mp3");
+    const [themeColors, setThemeColors] = useState(null);
+    // Chat message state
+    const [messages, setMessages] = useState([]);
 
     useEffect(() => {
         const urlParts = window.location.pathname.split('/');
         const room = urlParts[urlParts.length - 1];
         const name = location.state?.userName || `User${Math.floor(Math.random() * 10000)}`;
+        const botCount = parseInt(location.state?.botCount) || 0;
+
         setUserName(name);
         setRoomName(room);
+        setBotCount(botCount);
     }, []);
 
     useEffect(() => {
         if (roomName && userName) {
-            joinRoom();
+            const presetType = location.state?.presetType;
+            if (presetType) {
+                // Use the director/builder-based route
+                joinRoomWithPreset(presetType);
+            } else {
+                // Use the existing configurable join
+                const gameMode = location.state?.gameMode || "Classic";
+                const placementStrategy = location.state?.placementStrategy || "Uno Standard";
+                const gameTheme = location.state?.gameTheme || "Classic";
+                const botCount = parseInt(location.state?.botCount) || 0;
+
+                joinRoom(gameMode, placementStrategy, gameTheme, botCount);
+            }
         }
     }, [roomName, userName]);
 
@@ -56,8 +83,21 @@ function App() {
                 setTopCard(game.topCard);
                 setPlayerAmounts(game.playerAmounts);
                 setCurrentPlayer(game.currentPlayer);
+                setCardCount(game.cardCount);
+                setCommandHistory(game.commandHistory);
                 setError(null); // Clear previous errors
                 console.log("Game status updated:", game);
+            });
+
+            newConnection.on("ThemeSelected", (themeData) => {
+                document.documentElement.style.setProperty(
+                    "--game-background",
+                    themeData.background
+                );
+                setThemeColors(themeData.cardDesign);
+                console.log("Applying theme:", themeData.sound);
+                soundTheme.current = themeData.sound;
+                console.log("Applying theme:", soundTheme);
             });
 
             newConnection.on('UserJoined', (players) => {
@@ -70,6 +110,17 @@ function App() {
                 setPlayerAmounts(game.playerAmounts);
                 setTopCard(game.topCard);
                 setCurrentPlayer(game.currentPlayer);
+                setCardCount(game.cardCount);
+            });
+
+            newConnection.on("GameEnded", (message) => {
+                console.log('Game ended:', message);
+                alert(`Game ended: ${message}`);
+                setStarted(false);
+                setDeck(null);
+                setPlayerAmounts([]);
+                setTopCard(null);
+                setCurrentPlayer(null);
             });
 
             newConnection.on('UserLeft', (message) => {
@@ -91,8 +142,22 @@ function App() {
                 setIsConnected(true);
             });
 
+            newConnection.on('Flashbang', () => {
+                alert('Flashbang effect triggered!');
+            });
+            newConnection.on('PlaySound', () => {
+                const audio = new Audio(`/sounds/${soundTheme.current}`);
+                console.log("Playing sound:", soundTheme.current);
+                audio.play();
+            });
             newConnection.on('Error', (message) => {
                 setError(message);
+            });
+
+            // Chat message handler
+            newConnection.on('ReceiveMessage', (messageObj) => {
+                // messageObj is { sender, text, timestamp }
+                setMessages(prevMessages => [...prevMessages, messageObj]);
             });
 
             // Start connection
@@ -122,7 +187,7 @@ function App() {
         }
     };
 
-    const joinRoom = async () => {
+    const joinRoom = async (gameMode, placementStrategy, gameTheme, botCount) => {
         let activeConnection = connection;
 
         if (!isConnected) {
@@ -131,12 +196,30 @@ function App() {
 
         if (activeConnection && roomName && userName) {
             try {
-                await activeConnection.invoke('JoinRoom', roomName, userName);
+                await activeConnection.invoke('JoinRoom', roomName, userName, botCount, gameMode, placementStrategy, gameTheme);
                 setHasJoined(true);
                 console.log('Joined room:', roomName);
             } catch (error) {
                 console.error('Join room failed:', error);
                 alert(`Join room failed: ${error.message}`);
+            }
+        }
+    };
+    const joinRoomWithPreset = async (presetType) => {
+        let activeConnection = connection;
+
+        if (!isConnected) {
+            activeConnection = await connectToHub();
+        }
+
+        if (activeConnection && roomName && userName) {
+            try {
+                await activeConnection.invoke("JoinRoomThroughDirector", roomName, userName, presetType);
+                setHasJoined(true);
+                console.log(`Joined room with preset: ${presetType}`);
+            } catch (error) {
+                console.error('Join with preset failed:', error);
+                alert(`Join with preset failed: ${error.message}`);
             }
         }
     };
@@ -152,17 +235,52 @@ function App() {
         }
     };
 
-    async function handleCardPlay(card) {
-        console.log("Card clicked:", card);
-        if (connection && started) {
+    async function handleCardPlay(index) {
+        if (connection && started && !actionMade) {
             try {
-                await connection.invoke("PlayCard", roomName, userName, card);
+                // Send the entire card object to the server
+                console.log("Invoking PlayCard with card:", index);
+                const success = await connection.invoke("PlayCard", roomName, userName, index);
+                if (success) {
+                    setAction(1);
+                    setActionMade(true);
+                } else {
+                    console.warn("PlayCard failed — invalid move or server rejected it");
+                }
+                console.log("PlayCard invoked, success:", success);
             } catch (error) {
                 console.error("Play card failed:", error);
                 alert(`Play card failed: ${error.message}`);
             }
         }
     }
+
+    async function handleUndoCommand() {
+        if (connection && started) {
+            try {
+                await connection.invoke("UndoCard", roomName, userName);
+                setActionMade(false);
+            } catch (error) {
+                console.error("Undo card failed:", error);
+                alert(`Undo card failed: ${error.message}`);
+            }
+        }
+    }
+
+    // handle undo command and passing to next player
+    useEffect(() => {
+        let timer = null;
+        if (actionMade) {
+            timer = setTimeout(() => {
+                connection.invoke("NextPlayer", roomName, action.toString());
+                setActionMade(false);
+            }, 3000);
+        }
+
+        return () => {
+            clearTimeout(timer);
+        };
+    }, [actionMade]);
 
     // Cleanup on component unmount
     useEffect(() => {
@@ -174,8 +292,29 @@ function App() {
     }, [connection]);
 
     return (
-        <div className="Game">
-            <header className="Game-header">
+        <div className="Game" style={{ position: 'relative', minHeight: '100vh' }}>
+            {/* Chat Toggle Button */}
+            <button
+                style={{
+                    position: 'fixed',
+                    top: 20,
+                    right: isChatOpen ? 340 : 20,
+                    zIndex: 2000,
+                    backgroundColor: '#222',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    padding: '10px 18px',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                    cursor: 'pointer',
+                    fontWeight: 600,
+                    transition: 'right 0.3s'
+                }}
+                onClick={() => setIsChatOpen(open => !open)}
+            >
+                {isChatOpen ? 'Close Chat' : 'Open Chat'}
+            </button>
+            <header className="Game-header" style={{ marginRight: isChatOpen ? 340 : 0, transition: 'margin-right 0.3s' }}>
                 <h1>Dos game room</h1>
 
                 {hasJoined && !started && (
@@ -208,6 +347,22 @@ function App() {
                     </div>
                 )}
 
+                {started && playerAmounts && Object.keys(playerAmounts).length > 0 && (
+                    <div className="player-amounts-container" style={{ margin: '20px 0' }}>
+                        <h3>Player Card Amounts:</h3>
+                        {Object.entries(playerAmounts).map(([playerName, amount]) => (
+                            <PlayerCardInfo
+                                key={playerName}
+                                playerName={playerName}
+                                amount={amount}
+                                isYou={playerName === userName}
+                                connection={connection}
+                                roomName={roomName}
+                            />
+                        ))}
+                    </div>
+                )}
+
 
 
                 {players && !started && (
@@ -221,20 +376,71 @@ function App() {
                         ))}
                     </div>
                 )}
-                {started && playerAmounts && Object.keys(playerAmounts).length > 0 && (
-                    <div className="player-amounts-container" style={{ margin: '20px 0' }}>
-                        <h3>Player Card Amounts:</h3>
-                        {Object.entries(playerAmounts).map(([playerName, amount]) => (
-                            <p key={playerName}>
-                                {playerName} {playerName === userName ? "(you)" : ""} has: {amount} cards
-                            </p>
-                        ))}
-                    </div>
-                )}
+
+                <div className="annoy-player-container" style={{ margin: '20px 0' }}>
+                    <button
+                        style={{
+                            backgroundColor: '#ff9800', // orange
+                            color: '#fff',
+                            fontWeight: 'bold',
+                            padding: '8px 16px',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            margin: '5px',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                            transition: 'all 0.15s ease-in-out'
+                        }}
+                        onMouseOver={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                        onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+                        onClick={async () => {
+                            if (connection) {
+                                try {
+                                    await connection.invoke("AnnoyPlayers", roomName, "flashbang");
+                                } catch (error) {
+                                    console.error("Annoy players failed:", error);
+                                    alert(`Annoy players failed: ${error.message}`);
+                                }
+                            }
+                        }}
+                    >
+                        Annoy All Players with Flashbang
+                    </button>
+                </div>
+                <div className="annoy-player-container" style={{ margin: '20px 0' }}>
+                    <button
+                        style={{
+                            backgroundColor: '#28a745', // green
+                            color: '#fff',
+                            fontWeight: 'bold',
+                            padding: '8px 16px',
+                            border: 'none',
+                            borderRadius: '6px',
+                            cursor: 'pointer',
+                            margin: '5px',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                            transition: 'all 0.15s ease-in-out'
+                        }}
+                        onMouseOver={e => e.currentTarget.style.transform = 'scale(1.05)'}
+                        onMouseOut={e => e.currentTarget.style.transform = 'scale(1)'}
+                        onClick={async () => {
+                            if (connection) {
+                                try {
+                                    await connection.invoke("AnnoyPlayers", roomName, "soundeffect");
+                                } catch (error) {
+                                    console.error("Annoy players failed:", error);
+                                    alert(`Annoy players failed: ${error.message}`);
+                                }
+                            }
+                        }}
+                    >
+                        Annoy All Players with Sound Effect
+                    </button>
+                </div>
 
                 {topCard && (
                     <div className="top-card-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                        <Card card={topCard} />
+                        <Card card={topCard} cardColors={themeColors} />
                     </div>
                 )}
 
@@ -244,13 +450,15 @@ function App() {
                     </div>
                 )}
 
-                {started && currentPlayer === userName && (
+                {started && currentPlayer === userName && !actionMade && (
                     <div className="draw-card-controls" style={{ margin: '20px 0' }}>
                         <button
                             onClick={async () => {
                                 if (connection) {
                                     try {
                                         await connection.invoke("DrawCard", roomName, userName);
+                                        setAction(0);
+                                        setActionMade(true);
                                     } catch (error) {
                                         console.error("Draw card failed:", error);
                                         alert(`Draw card failed: ${error.message}`);
@@ -280,10 +488,71 @@ function App() {
                 {deck && (
                     <div className="deck-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         <h3>Deck:</h3>
-                        <Deck deck={deck} onCardPlay={handleCardPlay} />
+                        <Deck deck={deck} onCardPlay={handleCardPlay} cardColors={themeColors} />
                     </div>
                 )}
+
+                {started && (
+                    <div className="bottom-panel">
+                        {/* Card Count - Left Half */}
+                        {cardCount && Object.keys(cardCount).length > 0 && (
+                        <div className="placed-card-count-container">
+                            <h3>Placed Card Count</h3>
+                            <div className="card-count-list">
+                            {Object.entries(cardCount).map(([cardType, amount]) => (
+                                <div key={cardType} className="card-count-item">
+                                <span className="card-type">{cardType}</span>
+                                <span className="card-amount">×{amount}</span>
+                                </div>
+                            ))}
+                            </div>
+                        </div>
+                        )}
+
+                        {/* Command History - Right Half */}
+                        {commandHistory && Object.entries(commandHistory).length > 0 && (
+                        <div className="command-history">
+                            <h3>Command History</h3>
+                            <div className="command-list">
+                            {Object.entries(commandHistory).map(([key, cmd]) => (
+                                <div key={key} className="command-item">
+                                {cmd}
+                                </div>
+                            ))}
+                            </div>
+                        </div>
+                        )}
+                    </div>
+                )}
+
             </header>
+            {/* Chat Sidebar */}
+            <div
+                style={{
+                    position: 'fixed',
+                    top: 0,
+                    right: 0,
+                    width: 320,
+                    height: '100vh',
+                    background: '#fff',
+                    boxShadow: '-3px 0 20px rgba(0,0,0,0.15)',
+                    display: isChatOpen ? 'flex' : 'none',
+                    flexDirection: 'column',
+                    zIndex: 1500,
+                    borderLeft: '1px solid #e0e0e0',
+                    overflow: 'hidden',
+                    transition: 'opacity 0.3s ease-in-out'
+                }}
+            >
+                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+                    <Chat
+                        connection={connection}
+                        roomName={roomName}
+                        userName={userName}
+                        messages={messages}
+                    />
+                </div>
+            </div>
         </div>
     );
 }
