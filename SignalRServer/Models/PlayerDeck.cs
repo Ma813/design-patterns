@@ -9,12 +9,12 @@ public class PlayerDeck
     public string Username { get; private set; }
     public CommandHistory history = new(); 
 
-    public PlayerDeck(string username)
+    public PlayerDeck(string username, int initialCardCount = 7)
     {
         Cards = [];
         Username = username;
         Cards.Add(UnoCard.GenerateSuperCard());
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < initialCardCount; i++)
         {
             UnoCard card = UnoCard.GenerateCard();
             Cards.Add(card);

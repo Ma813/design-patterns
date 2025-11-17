@@ -113,7 +113,7 @@ public class BotClient : IBotClientPrototype
                 await facade.DrawCard(game.RoomName, UserName, null);
                 await facade.notifyPlayers(game);
             }
-            logger.LogInfo($"{UserName} has: {string.Join(", ", playerDeck.Cards.Select(c => c.Color + " " + c.Digit))}");
+            logger.LogInfo($"{UserName} has: {string.Join(", ", playerDeck.Cards.Select(c => c.Color + " " + c.Name))}");
         }
     }
 }

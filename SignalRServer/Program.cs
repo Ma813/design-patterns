@@ -2,6 +2,13 @@ using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Hubs;
 using SignalRServer.Models;
 
+using SignalRServer.Card;
+if (args.Length > 0 && args[0] == "--benchmark")
+{
+    PerformanceTester.Run();
+    return;
+}
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container

@@ -12,7 +12,6 @@ using SignalRServer.Models.ThemeFactories;
 
 namespace SignalRServer.Models;
 
-// TODO : make Facade into a singleton
 public class Facade
 {
     private static Facade? _instance = null;
