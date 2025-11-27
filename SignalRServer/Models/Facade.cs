@@ -9,6 +9,7 @@ using SignalRServer.Models.CardPlacementStrategies;
 using SignalRServer.Models.Chat;
 using SignalRServer.Models.Game;
 using SignalRServer.Models.ThemeFactories;
+using SignalRServer.Visitors;
 
 namespace SignalRServer.Models;
 
@@ -129,12 +130,11 @@ public class Facade
     public async Task StartGame(string roomName, string userName, IHubCallerClients? Clients)
     {
         AbstractGame game = Games[roomName];
-        game.Start();
+        game.Start(Clients);
 
         foreach (var player in game.Players)
         {
             GameForSending gameForSeding = new GameForSending(game, player.Value);
-
             await Clients.Client(player.Key).SendAsync("GameStarted", gameForSeding);
         }
     }
@@ -286,9 +286,21 @@ public class Facade
     {
         foreach (var player in game.Players)
         {
+
+            PlayerDeck playerDeck = game.PlayerDecks.FirstOrDefault(pd => pd.Username == player.Value);
+            
+            playerDeck.Accept(new LoggerVisitor());
+            playerDeck.Accept(new ScoreVisitor());
+            playerDeck.Accept(new CardsVisitor());
+
+
+
             GameForSending gameForSending = new GameForSending(game, player.Value);
             await _hubContext.Clients.Client(player.Key).SendAsync("GameStatus", gameForSending);
         }
+        
+
+
 
         foreach (var bot in game.Bots)
         {

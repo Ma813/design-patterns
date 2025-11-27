@@ -30,6 +30,7 @@ function App() {
     const [commandHistory, setCommandHistory] = useState([]);
     const soundTheme = useRef("annoying.mp3");
     const [themeColors, setThemeColors] = useState(null);
+    const [score, setScore] = useState(0);
     // Chat message state
     const [messages, setMessages] = useState([]);
 
@@ -79,7 +80,8 @@ function App() {
             // Set up event handlers
 
             newConnection.on("GameStatus", (game) => {
-                setDeck(game.playerDeck);
+                console.log("Received GameStatus:", game.playerDeck);
+                // setDeck(game.playerDeck);
                 setTopCard(game.topCard);
                 setPlayerAmounts(game.playerAmounts);
                 setCurrentPlayer(game.currentPlayer);
@@ -106,7 +108,8 @@ function App() {
 
             newConnection.on("GameStarted", (game) => {
                 setStarted(true);
-                setDeck(game.playerDeck);
+                setDeck(game.playerDeck.cards);
+                console.log("Game started with deck:", game.playerDeck.cards);
                 setPlayerAmounts(game.playerAmounts);
                 setTopCard(game.topCard);
                 setCurrentPlayer(game.currentPlayer);
@@ -160,6 +163,14 @@ function App() {
                 setMessages(prevMessages => [...prevMessages, messageObj]);
             });
 
+            newConnection.on('UpdateCards', (newDeck) => {
+                setDeck(newDeck);
+            });
+
+            newConnection.on('UpdateScore', (newScore) => {
+                setScore(newScore);
+            });
+
             // Start connection
             await newConnection.start();
             setConnection(newConnection);
@@ -198,7 +209,6 @@ function App() {
             try {
                 await activeConnection.invoke('JoinRoom', roomName, userName, botCount, gameMode, placementStrategy, gameTheme);
                 setHasJoined(true);
-                console.log('Joined room:', roomName);
             } catch (error) {
                 console.error('Join room failed:', error);
                 alert(`Join room failed: ${error.message}`);
@@ -485,7 +495,14 @@ function App() {
                     </div>
                 )}
 
+                {score > 0 && (
+                    <div className="score-container" style={{ margin: '20px 0' }}>
+                        <h3>Your Score: {score}</h3>
+                    </div>
+                )}
+
                 {deck && (
+                    
                     <div className="deck-container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                         <h3>Deck:</h3>
                         <Deck deck={deck} onCardPlay={handleCardPlay} cardColors={themeColors} />

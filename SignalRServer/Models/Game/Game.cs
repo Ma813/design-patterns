@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Card;
 using SignalRServer.Models.Commands;
 
@@ -11,12 +12,12 @@ public class Game : AbstractGame
     }
 
 
-    public override void Start()
+    public override void Start(IHubCallerClients? clients = null)
     {
         IsStarted = true;
-        foreach (var player in Players.Values)
+        foreach (var player in Players)
         {
-            PlayerDeck deck = new(player);
+            PlayerDeck deck = new(player.Value, client: clients?.Client(player.Key));
             PlayerDecks.Add(deck);
         }
     }

@@ -1,5 +1,7 @@
+using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Card;
 using SignalRServer.Models.Commands;
+using SignalRServer.Visitors;
 
 namespace SignalRServer.Models;
 
@@ -7,9 +9,10 @@ public class PlayerDeck
 {
     public List<UnoCard> Cards { get; private set; }
     public string Username { get; private set; }
-    public CommandHistory history = new(); 
+    public CommandHistory history = new();
+    public ISingleClientProxy? _client;
 
-    public PlayerDeck(string username, int initialCardCount = 7)
+    public PlayerDeck(string username, int initialCardCount = 7, ISingleClientProxy? client = null)
     {
         Cards = [];
         Username = username;
@@ -19,6 +22,8 @@ public class PlayerDeck
             UnoCard card = UnoCard.GenerateCard();
             Cards.Add(card);
         }
+        
+        _client = client;
     }
 
     public void AddCard(UnoCard card)
@@ -45,6 +50,12 @@ public class PlayerDeck
         Command? command = history.Pop();
         command?.Undo();
     }
+
+    public void Accept(IDeckVisitor visitor)
+    {
+        visitor.Visit(this);
+    } 
+
 
     public int Count => Cards.Count;
 }
