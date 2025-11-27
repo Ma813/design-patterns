@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using SignalRServer.Card;
 
 namespace SignalRServer.Card;
 
@@ -9,23 +8,25 @@ public static class PerformanceTester
     {
         List<int> iterationsList = new() { 1_000_000, 2_000_000, 5_000_000, 10_000_000, 50_000_000 };
 
+        Console.WriteLine("=== UNO CARD PERFORMANCE TEST (TABLE FORMAT) ===");
+        Console.WriteLine();
+
+        // Table header
+        Console.WriteLine(
+            $"{ "Iterations",15} | { "Method",25} | { "Time (ms)",12} | { "Memory Used (MB)",18}"
+        );
+        Console.WriteLine(new string('-', 75));
+
         foreach (int iterations in iterationsList)
         {
-            Console.WriteLine("=== UNO CARD PERFORMANCE TEST ===");
-            Console.WriteLine($"Iterations: {iterations:N0}");
-            Console.WriteLine();
-
-            Test("Normal Card Generation", () => UnoCard.GenerateCard(useFlyweight: false), iterations);
-            Test("Flyweight Card Generation", () => UnoCard.GenerateCard(useFlyweight: true), iterations);
+            Test("Normal Generation", () => UnoCard.GenerateCard(useFlyweight: false), iterations);
+            Test("Flyweight Generation", () => UnoCard.GenerateCard(useFlyweight: true), iterations);
         }
     }
 
-
-    private static void Test(string name, Func<UnoCard> generator, int iterations)
+    private static void Test(string label, Func<UnoCard> generator, int iterations)
     {
-        Console.WriteLine($"--- {name} ---");
-
-        // Force a GC before test
+        // GC cleanup before test
         GC.Collect();
         GC.WaitForPendingFinalizers();
         GC.Collect();
@@ -35,18 +36,18 @@ public static class PerformanceTester
         var sw = Stopwatch.StartNew();
 
         var cards = new List<UnoCard>(iterations);
-
         for (int i = 0; i < iterations; i++)
         {
             cards.Add(generator());
         }
 
         sw.Stop();
-
         long afterMemory = GC.GetTotalMemory(false);
 
-        Console.WriteLine($"Time:   {sw.ElapsedMilliseconds} ms");
-        Console.WriteLine($"Memory: {(afterMemory - beforeMemory) / 1024.0 / 1024.0:F2} MB used");
-        Console.WriteLine();
+        double memUsedMB = (afterMemory - beforeMemory) / 1024.0 / 1024.0;
+
+        Console.WriteLine(
+            $"{iterations,15:N0} | {label,25} | {sw.ElapsedMilliseconds,12} | {memUsedMB,18:F2}"
+        );
     }
 }

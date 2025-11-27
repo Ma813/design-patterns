@@ -209,3 +209,7 @@
 .undo-button:active {
   transform: translateY(0);
 }
+
+.score-container {
+    margin-top: 20px;
+}

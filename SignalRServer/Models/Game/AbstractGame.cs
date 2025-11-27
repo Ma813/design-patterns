@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Card;
 using SignalRServer.Models.CardPlacementStrategies;
 using SignalRServer.Models.ThemeFactories;
@@ -42,7 +43,7 @@ public abstract class AbstractGame : ISubject
     {
         CardPlacementStrategy = strategy;
     }
-    public abstract void Start();
+    public abstract void Start(IHubCallerClients? clients = null);
     public abstract void End();
     public abstract void DrawCard(string username);
     public abstract string PlayCard(string username, UnoCard card);
