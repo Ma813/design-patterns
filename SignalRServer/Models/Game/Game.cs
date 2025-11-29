@@ -39,23 +39,6 @@ public class Game : AbstractGame
         playerDeck.ExecuteCommand(new DrawCardCommand(this, playerDeck));
     }
 
-    public override string PlayCard(string username, UnoCard card)
-    {
-        var playerDeck = PlayerDecks.FirstOrDefault(pd => pd.Username == username);
-
-        if (playerDeck == null) return "Player not found";
-        if (playerDeck != PlayerDecks[CurrentPlayerIndex]) return "Not your turn";
-        if (!card.CanPlayOn(TopCard, CardPlacementStrategy)) return "Card cannot be played on top of current top card";
-
-        playerDeck.ExecuteCommand(new PlayCardCommand(this, playerDeck, card, CardPlacementStrategy));
-        if (playerDeck.Count == 0)
-        {
-            End();
-            return "WIN";
-        }
-        return "OK";
-    }
-
     public override string UndoCard(string username)
     {
         var playerDeck = PlayerDecks.FirstOrDefault(pd => pd.Username == username);
