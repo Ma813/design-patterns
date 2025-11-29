@@ -1,6 +1,8 @@
+using System.Runtime.CompilerServices;
 using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Card;
 using SignalRServer.Models.CardPlacementStrategies;
+using SignalRServer.Models.Commands;
 using SignalRServer.Models.ThemeFactories;
 
 namespace SignalRServer.Models.Game;
@@ -15,7 +17,9 @@ public abstract class AbstractGame : ISubject
     public int CurrentPlayerIndex { get; set; }
     public int Direction { get; set; } // 1 for clockwise, -1 for counter-clockwise
     public List<IBotClientPrototype> Bots { get; set; } = [];
-    protected ICardPlacementStrategy CardPlacementStrategy { get; set; }
+
+    // TODO: see if changing this from protected to public causes any issues
+    public ICardPlacementStrategy CardPlacementStrategy { get; set; }
     public IUnoThemeFactory ThemeFactory { get; set; }
     public Dictionary<string, int> PlacedCardCount { get; set; }
 
@@ -46,7 +50,6 @@ public abstract class AbstractGame : ISubject
     public abstract void Start(IHubCallerClients? clients = null);
     public abstract void End();
     public abstract void DrawCard(string username);
-    public abstract string PlayCard(string username, UnoCard card);
     public abstract string UndoCard(string username);
     public abstract void NextPlayer(Action action);
     public abstract void NextDrawCard();
@@ -82,5 +85,36 @@ public abstract class AbstractGame : ISubject
     public void SetCardCount(Dictionary<string, int> cardCount)
     {
         PlacedCardCount = cardCount;
+    }
+
+    public string PlayCard(string username, UnoCard card)
+    {
+        var playerDeck = PlayerDecks.FirstOrDefault(pd => pd.Username == username);
+
+        NullValidator nv = new NullValidator();
+        TurnValidator tv = new TurnValidator();
+        CardOwnershipValidator cov = new CardOwnershipValidator();
+        PlacementStrategyValidator psv = new PlacementStrategyValidator();
+
+        nv.SetNext(tv);
+        tv.SetNext(cov);
+        cov.SetNext(psv);
+
+        BaseCardPlayValidator validator = nv;
+
+        var result = validator.Validate(playerDeck, card, this);
+        if(result != "OK") return result;
+        
+        // if (playerDeck == null) return "Player not found";
+        // if (playerDeck != PlayerDecks[CurrentPlayerIndex]) return "Not your turn";
+        // if (!card.CanPlayOn(TopCard, CardPlacementStrategy)) return "Card cannot be played on top of current top card";
+
+        playerDeck.ExecuteCommand(new PlayCardCommand(this, playerDeck, card, CardPlacementStrategy));
+        if (playerDeck.Count == 0)
+        {
+            End();
+            return "WIN";
+        }
+        return "OK";
     }
 }
