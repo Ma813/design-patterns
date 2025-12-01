@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Card;
+using SignalRServer.Expressions;
 using SignalRServer.Models;
 
 namespace SignalRServer.Hubs;
@@ -34,11 +35,10 @@ public class PlayerHub : Hub
         await facade.DrawCard(roomName, userName, Clients);
     }
 
-    public async Task<bool> PlayCard(string roomName, string userName, int cardIndex)
+    public async Task PlayCard(string roomName, string userName, int cardIndex)
     {
         logger.LogInfo($"User {userName} is playing a card in room {roomName}");
-        bool result = await facade.PlayCard(roomName, userName, cardIndex, Clients);
-        return result;
+        facade.PlayCard(roomName, userName, cardIndex, Clients).Wait();
     }
 
     public async Task UndoCard(string roomName, string userName)
@@ -82,6 +82,21 @@ public class PlayerHub : Hub
 
         await facade.JoinRoomThroughDirector(roomName, userName, builderType, Clients, Context, Groups);
     }
+
+    public async Task Command(string command)
+    {
+        System.Console.WriteLine($"Received console command: {command}");
+
+        IExpression expression = Interpreter.Parse(command);
+
+        
+        
+        string result = facade.InterpretExpression(expression, command, Context, Clients, Groups);
+
+        await Clients.Client(Context.ConnectionId).SendAsync("ReceiveCommandOutput", $"{result}");
+    }
+
+
     // private async Task notifyPlayers(AbstractGame game)
     // {
     //     foreach (var player in game.Players)

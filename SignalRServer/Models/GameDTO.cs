@@ -31,4 +31,27 @@ public class GameForSending
             commandHistory.Add(cmd.ToString());
         }
     }
+
+    public string ToConsoleString()
+    {
+        string result = "Game State:\n";
+        result += $"Current Player: {currentPlayer}\n";
+        result += $"Direction: {(direction == 1 ? "Clockwise" : "Counter-Clockwise")}\n";
+        result += "Player Amounts:\n";
+        foreach (var player in PlayerAmounts)
+        {
+            result += $"- {player.Key} {(player.Key == PlayerDeck.Username ? "(You)" : "")}: {player.Value} cards\n";
+        }
+        result += $"Your Deck ({PlayerDeck.Username}):\n";
+
+        for (int i = 0; i < PlayerDeck.Cards.Count; i++)
+        {
+            var card = PlayerDeck.Cards[i];
+            result += $"{i}. {card}\n";
+        }
+        result += $"Top Card: {topCard}\n";
+        result += $"Current Player: {currentPlayer} {(currentPlayer == PlayerDeck.Username ? "(You)" : "")}\n";
+
+        return result;
+    }
 }
