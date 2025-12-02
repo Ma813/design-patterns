@@ -172,6 +172,31 @@ function Home() {
                             Endless Preset
                         </button>
                     </div>
+
+                    <p
+                        style={{ alignSelf: 'center', margin: 20, fontWeight: 'bold', color: '#666' }}
+                    >
+                        — OR —
+                    </p>
+
+
+                    <div style={{ marginTop: '16px', textAlign: 'center' }}>
+                        <button
+                            onClick={() => navigate("console")}
+                            style={{
+                                backgroundColor: '#555555',
+                                color: '#fff',
+                                padding: '10px 20px',
+                                borderRadius: '8px',
+                                border: 'none',
+                                fontWeight: 'bold',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Open Console
+                        </button>
+                    </div>
+
                 </div>
 
             </div>

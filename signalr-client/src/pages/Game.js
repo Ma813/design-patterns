@@ -68,8 +68,10 @@ function App() {
         try {
             console.log('Attempting to connect to SignalR hub... Room:', roomName, 'User:', userName);
 
+            const URL = process.env.REACT_APP_API || 'http://localhost:5000';
+
             const newConnection = new signalR.HubConnectionBuilder()
-                .withUrl('http://localhost:5000/gameHub', {
+                .withUrl(`${URL}/gameHub`, {
                     skipNegotiation: true, // Important for CORS
                     transport: signalR.HttpTransportType.WebSockets
                 })
