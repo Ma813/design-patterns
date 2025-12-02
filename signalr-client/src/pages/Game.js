@@ -248,7 +248,7 @@ function App() {
     };
 
     async function handleCardPlay(index) {
-        if (connection && started && !actionMade) {
+        if (connection && started) {
             try {
                 // Send the entire card object to the server
                 console.log("Invoking PlayCard with card:", index);
@@ -279,20 +279,21 @@ function App() {
         }
     }
 
+    // ! Removed to make console work
     // handle undo command and passing to next player
-    useEffect(() => {
-        let timer = null;
-        if (actionMade) {
-            timer = setTimeout(() => {
-                connection.invoke("NextPlayer", roomName, action.toString());
-                setActionMade(false);
-            }, 3000);
-        }
+    // useEffect(() => {
+    //     let timer = null;
+    //     if (actionMade) {
+    //         timer = setTimeout(() => {
+    //             connection.invoke("NextPlayer", roomName, action.toString());
+    //             setActionMade(false);
+    //         }, 3000);
+    //     }
 
-        return () => {
-            clearTimeout(timer);
-        };
-    }, [actionMade]);
+    //     return () => {
+    //         clearTimeout(timer);
+    //     };
+    // }, [actionMade]);
 
     // Cleanup on component unmount
     useEffect(() => {
@@ -462,7 +463,7 @@ function App() {
                     </div>
                 )}
 
-                {started && currentPlayer === userName && !actionMade && (
+                {started && currentPlayer === userName && (
                     <div className="draw-card-controls" style={{ margin: '20px 0' }}>
                         <button
                             onClick={async () => {

@@ -26,19 +26,19 @@ public class PlayerHub : Hub
     public async Task StartGame(string roomName, string userName)
     {
         logger.LogInfo($"User {userName} is starting game in room {roomName}");
-        await facade.StartGame(roomName, userName, Clients);
+        await facade.StartGame(roomName, userName, Clients, Context.ConnectionId);
     }
 
     public async Task DrawCard(string roomName, string userName)
     {
         logger.LogInfo($"User {userName} is drawing a card in room {roomName}");
-        await facade.DrawCard(roomName, userName, Clients);
+        await facade.DrawCard(roomName, userName, Clients, Context.ConnectionId);
     }
 
     public async Task PlayCard(string roomName, string userName, int cardIndex)
     {
         logger.LogInfo($"User {userName} is playing a card in room {roomName}");
-        facade.PlayCard(roomName, userName, cardIndex, Clients).Wait();
+        facade.PlayCard(roomName, userName, cardIndex, Clients, Context.ConnectionId).Wait();
     }
 
     public async Task UndoCard(string roomName, string userName)

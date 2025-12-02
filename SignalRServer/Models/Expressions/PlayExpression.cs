@@ -22,33 +22,24 @@ public class PlayExpression : IExpression
         if (game == null)
             return "Error: You are not in a game room.";
 
+        if (game.PlayerDecks.Where(pd => pd.Username == game.Players[context.ConnectionId]).First().Count <= cardIndex || cardIndex < 0)
+            return "Error: Invalid card index.";
+
         string userName = game.Players[context.ConnectionId];
 
 
-        string result = facade.PlayCard(game.RoomName, userName, cardIndex, clients).Result;
-        if (result != "OK")
+        string result = facade.PlayCard(game.RoomName, userName, cardIndex, clients, context.ConnectionId).Result;
+        if (result != "OK" && result != "WIN")
             return result;
+
+        string answer = "Played " + game.TopCard.ToString();
+
         if (result == "WIN")
         {
-            foreach (var player in game.Players)
-            {
-                if (player.Key != context.ConnectionId)
-                    clients.Client(player.Key).SendAsync("GameEnded", $"{userName} has won the game!").Wait();
-
-                return "You have won the game!";
-            }
+            answer += $"\nCongratulations {userName}, you have won the game!";
         }
 
-        foreach (var player in game.Players)
-        {
-            if (player.Key != context.ConnectionId)
-                clients.Client(player.Key).SendAsync("SystemMessage", $"{userName} has played a card: {game.TopCard}").Wait();
-            GameForSending gameForSeding = new GameForSending(game, player.Value);
-            clients.Client(player.Key).SendAsync("SystemMessage", gameForSeding.ToConsoleString()).Wait();
-
-        }
-
-        return "Played " + game.TopCard.ToString();
+        return answer;
 
     }
 }
