@@ -512,6 +512,13 @@ function App() {
                     </div>
                 )}
 
+                {/* Undo Command Button */}
+                {started && currentPlayer === userName && actionMade && (
+                    <div>
+                        <button onClick={handleUndoCommand}>Undo</button>
+                    </div>
+                )}
+
                 {started && (
                     <div className="bottom-panel">
                         {/* Card Count - Left Half */}
