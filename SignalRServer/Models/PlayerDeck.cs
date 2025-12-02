@@ -12,7 +12,7 @@ public class PlayerDeck
     public CommandHistory history = new();
     public ISingleClientProxy? _client;
 
-    public PlayerDeck(string username, int initialCardCount = 6, ISingleClientProxy? client = null, bool testMode = false)// testMode = true to get test win scenarios
+    public PlayerDeck(string username, int initialCardCount = 6, ISingleClientProxy? client = null, bool testMode = true)// testMode = true to get test win scenarios
     {
         Cards = [];
         Username = username;
