@@ -120,6 +120,7 @@ public class Facade
         }
 
         await Clients.Group(roomName).SendAsync("UserJoined", usernames);
+        SystemMessages.UserJoined(game, connectionId, userName, roomName, Clients).Wait();
 
         var themeInfo = new
         {
@@ -130,7 +131,7 @@ public class Facade
         await Clients.Group(roomName).SendAsync("ThemeSelected", themeInfo);
     }
 
-    public async Task StartGame(string roomName, string userName, IHubCallerClients? Clients)
+    public async Task StartGame(string roomName, string userName, IHubCallerClients? Clients, string connectionId = "bot")
     {
         AbstractGame game = Games[roomName];
         game.Start(Clients);
@@ -139,21 +140,26 @@ public class Facade
         {
             GameForSending gameForSeding = new GameForSending(game, player.Value);
             await Clients.Client(player.Key).SendAsync("GameStarted", gameForSeding);
-            await Clients.Client(player.Key).SendAsync("SystemMessage", "The game has started!");
-            await Clients.Client(player.Key).SendAsync("SystemMessage", gameForSeding.ToConsoleString());
         }
+        SystemMessages.GameStarted(game, userName, connectionId, Clients).Wait();
     }
 
-    public async Task<string> DrawCard(string roomName, string userName, IHubCallerClients<IClientProxy>? Clients)
+    public async Task<string> DrawCard(string roomName, string userName, IHubCallerClients<IClientProxy>? Clients, string connectionId = "bot")
     {
+        if (Clients == null)
+        {
+            Clients = new NullClients();
+        }
 
         AbstractGame game = Games[roomName];
         game.DrawCard(userName);
+        SystemMessages.CardDrawn(game, userName, connectionId, Clients).Wait();
+
         await notifyPlayers(game);
         return "OK";
     }
 
-    public async Task<string> PlayCard(string roomName, string userName, int cardIndex, IHubCallerClients<IClientProxy>? Clients)
+    public async Task<string> PlayCard(string roomName, string userName, int cardIndex, IHubCallerClients<IClientProxy>? Clients, string connectionId = "bot")
     {
         if (Clients == null)
         {
@@ -172,6 +178,7 @@ public class Facade
         string result = game.PlayCard(userName, playerDeck.Cards[cardIndex]);
         if (result == "WIN")
         {
+            SystemMessages.CardPlayed(game, userName, connectionId, Clients, true).Wait();
             await _hubContext.Clients.Group(roomName).SendAsync("GameEnded", $"{userName} has won the game!");
             return "WIN";
         }
@@ -180,6 +187,7 @@ public class Facade
             await Clients.Caller.SendAsync("Error", result);
             return "Error: " + result;
         }
+        SystemMessages.CardPlayed(game, userName, connectionId, Clients, false).Wait();
 
         await notifyPlayers(game);
         return "OK";

@@ -16,20 +16,23 @@ public class DrawExpression : IExpression
         if (game == null)
             return "Error: You are not in a game room.";
 
+        if (game.IsStarted == false)
+            return "Error: The game has not started yet.";
+
+        string username = game.Players[context.ConnectionId];
+
+
+        int index = game.Players.Keys.ToList().IndexOf(context.ConnectionId);
+
+        if (game.CurrentPlayerIndex != index)
+            return "Error: It is not your turn.";
+
         string userName = game.Players[context.ConnectionId];
 
-        string result = facade.DrawCard(game.RoomName, userName, clients).Result;
+        string result = facade.DrawCard(game.RoomName, userName, clients, context.ConnectionId).Result;
         if (result != "OK")
             return result;
 
-        foreach (var player in game.Players)
-        {
-            if (player.Key != context.ConnectionId)
-                clients.Client(player.Key).SendAsync("SystemMessage", $"{userName} has drawn a card.").Wait();
-            GameForSending gameForSeding = new GameForSending(game, player.Value);
-            clients.Client(player.Key).SendAsync("SystemMessage", gameForSeding.ToConsoleString()).Wait();
-
-        }
 
         return "Drew a card.";
     }

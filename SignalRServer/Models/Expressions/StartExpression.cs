@@ -20,18 +20,7 @@ public class StartExpression : IExpression
 
         string userName = game.Players[context.ConnectionId];
 
-        facade.StartGame(game.RoomName, userName, clients).Wait();
-
-        foreach (var player in game.Players)
-        {
-            if (player.Key != context.ConnectionId)
-                clients.Client(player.Key).SendAsync("SystemMessage", $"The game has been started by \"{userName}\"!").Wait();
-
-            GameForSending gameForSeding = new GameForSending(game, player.Value);
-            clients.Client(player.Key).SendAsync("SystemMessage", "The game has started!").Wait();
-
-            clients.Client(player.Key).SendAsync("SystemMessage", gameForSeding.ToConsoleString()).Wait();
-        }
+        facade.StartGame(game.RoomName, userName, clients, context.ConnectionId).Wait();
 
         return "Game started successfully.";
     }

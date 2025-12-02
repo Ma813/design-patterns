@@ -25,7 +25,7 @@ public class DrawToMatchGame : AbstractGame
     {
         IsStarted = false;
         PlayerDecks.Clear();
-        TopCard = UnoCard.GenerateCard();
+        // TopCard = UnoCard.GenerateCard(); // Card will reset in another place
         CurrentPlayerIndex = 0;
         Direction = 1;
     }
@@ -55,6 +55,7 @@ public class DrawToMatchGame : AbstractGame
             End();
             return "WIN";
         }
+        NextPlayer(Action.place);
         return "OK";
     }
 

@@ -44,16 +44,9 @@ public class JoinExpression : IExpression
         foreach (var player in game.Players)
         {
             playerList += $"- {player.Value}\n";
-            if (player.Key != connectionId)
-                clients.Client(player.Key).SendAsync("SystemMessage", $"{userName} has joined the room {roomName}").Wait();
 
         }
-        foreach (var player in game.Players)
-        {
-            if (player.Key != connectionId)
-                clients.Client(player.Key).SendAsync("SystemMessage", playerList).Wait();
-        }
-
+        
         return $"Joined room {roomName}.\n{playerList}";
     }
 }

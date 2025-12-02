@@ -26,7 +26,7 @@ public class Game : AbstractGame
     {
         IsStarted = false;
         PlayerDecks.Clear();
-        TopCard = UnoCard.GenerateCard();
+        // TopCard = UnoCard.GenerateCard(); // Card will reset in another place
         CurrentPlayerIndex = 0;
         Direction = 1;
     }
@@ -37,6 +37,7 @@ public class Game : AbstractGame
         if (playerDeck == null) return;
 
         playerDeck.ExecuteCommand(new DrawCardCommand(this, playerDeck));
+        NextPlayer(Action.draw);
     }
 
     public override string PlayCard(string username, UnoCard card)
@@ -53,6 +54,7 @@ public class Game : AbstractGame
             End();
             return "WIN";
         }
+        NextPlayer(Action.place);
         return "OK";
     }
 
