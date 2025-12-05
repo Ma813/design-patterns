@@ -17,7 +17,7 @@ public class EndlessGame : AbstractGame
         IsStarted = true;
         foreach (var player in Players)
         {
-            PlayerDeck deck = new(player.Value, client: client?.Client(player.Key));
+            PlayerDeck deck = new(player.Value,Generator, client: client?.Client(player.Key));
             PlayerDecks.Add(deck);
         }
     }

@@ -15,7 +15,7 @@ public abstract class Command
         this.game = game;
         this.pd = pd;
 
-        backup = new PlayerDeck("backup");
+        backup = new PlayerDeck("backup",game.Generator);
         backup.Cards.Clear();
         foreach (UnoCard uc in pd.Cards) backup.AddCard(uc);
     }

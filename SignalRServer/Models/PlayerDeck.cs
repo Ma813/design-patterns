@@ -9,14 +9,18 @@ public class PlayerDeck
 {
     public List<UnoCard> Cards { get; private set; }
     public string Username { get; private set; }
-    public CommandHistory history = new();
+    public CommandHistory history = new();   
+     private readonly CardGenerator _generator;
+
     public ISingleClientProxy? _client;
 
-    public PlayerDeck(string username, int initialCardCount = 7, ISingleClientProxy? client = null)
+    public PlayerDeck(string username, CardGenerator generator, int initialCardCount = 7, ISingleClientProxy? client = null)
     {
         Cards = [];
         Username = username;
         Cards.Add(UnoCard.GenerateSuperCard());
+        _generator = generator;
+
         for (int i = 0; i < initialCardCount; i++)
         {
             UnoCard card = UnoCard.GenerateCard();

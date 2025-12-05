@@ -31,7 +31,7 @@ function Home() {
             navigate(`/game/${roomName}`, {
                 state: {
                     userName,
-                    presetType // we'll check this in Game.js to decide whether to call JoinRoomThroughDirector
+                    presetType 
                 }
             });
         } else {
