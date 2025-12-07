@@ -1,13 +1,16 @@
 //This class represents a player client in the SignalR server context.
 //It is a hub for managing player connections
 
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using SignalRServer.AnnoyingEffects;
 using SignalRServer.Card;
 using SignalRServer.Expressions;
 using SignalRServer.Hubs;
+using SignalRServer.Model.Chat.Colleagues;
 using SignalRServer.Models.CardPlacementStrategies;
 using SignalRServer.Models.Chat;
+using SignalRServer.Models.Chat.Colleagues;
 using SignalRServer.Models.Game;
 using SignalRServer.Models.ThemeFactories;
 using SignalRServer.Visitors;
@@ -35,6 +38,8 @@ public class Facade
     AbstractGameCreator gameFactory = new GameCreator();
 
     private static readonly Dictionary<string, string> UsernameToConnectionId = new Dictionary<string, string>();
+
+    private readonly Dictionary<string, ChatMediator> _chatMediators = new();
 
     private static readonly SoundEffectAdaptee annoyingSoundAdaptee = new SoundEffectAdaptee();
     AnnoyingFlashbang annoyingFlashbang = new AnnoyingFlashbang();
@@ -141,6 +146,9 @@ public class Facade
             GameForSending gameForSeding = new GameForSending(game, player.Value);
             await Clients.Client(player.Key).SendAsync("GameStarted", gameForSeding);
         }
+
+        await SetupChatMediator(roomName, game, Clients);
+
         SystemMessages.GameStarted(game, userName, connectionId, Clients).Wait();
     }
 
@@ -368,4 +376,39 @@ public class Facade
         return null; // user is not in a game
     }
 
+    public async Task SetupChatMediator(string roomName, AbstractGame game, IHubCallerClients clients)
+    {
+        var mediator = new ChatMediator(roomName);
+
+        foreach(var player in game.Players.Where(p => !p.Key.StartsWith("bot-")))
+        {
+            var humanColleague = new HumanPlayerColleague(
+                player.Value,
+                player.Key,
+                clients.Client(player.Key)
+            );
+
+            mediator.Register(humanColleague);
+        }
+
+        foreach(var bot in game.Bots)
+        {
+            var botColleague = new BotPlayerColleague(bot.UserName);
+            mediator.Register(botColleague);
+            await botColleague.SendRandomMessage(roomName);
+        }
+
+        var systemColleague = new SystemColleague(_hubContext, roomName);
+        mediator.Register(systemColleague);
+
+        _chatMediators[roomName] = mediator;
+    }
+
+    public async Task SendTextMessageThroughMediator(string roomName, string sender, string text)
+    {
+        if(_chatMediators.TryGetValue(roomName, out var mediator))
+        {
+            await mediator.SendMessage(sender, text, roomName);
+        }
+    }
 }

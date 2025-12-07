@@ -74,7 +74,7 @@ public class BotClient : IBotClientPrototype
                 "Ur a communist!" //Should be censored 
             };
             var message = messages[random.Next(messages.Length)];
-            await facade.SendTextMessage(game.RoomName, UserName, message);
+            await facade.SendTextMessageThroughMediator(game.RoomName, UserName, message);
         }
     }
 
@@ -102,7 +102,7 @@ public class BotClient : IBotClientPrototype
                 // Brag about winning
                 if (playerDeck.Cards.Count == 0)
                 {
-                    await facade.SendTextMessage(game.RoomName, UserName, "I win! Better luck next time humans!");
+                    await facade.SendTextMessageThroughMediator(game.RoomName, UserName, "I win! Better luck next time humans!");
                 }
                 await facade.notifyPlayers(game);
             }
