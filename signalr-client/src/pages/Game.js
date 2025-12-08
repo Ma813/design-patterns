@@ -68,8 +68,10 @@ function App() {
         try {
             console.log('Attempting to connect to SignalR hub... Room:', roomName, 'User:', userName);
 
+            const URL = process.env.REACT_APP_API || 'http://localhost:5000';
+
             const newConnection = new signalR.HubConnectionBuilder()
-                .withUrl('http://localhost:5000/gameHub', {
+                .withUrl(`${URL}/gameHub`, {
                     skipNegotiation: true, // Important for CORS
                     transport: signalR.HttpTransportType.WebSockets
                 })
@@ -246,7 +248,7 @@ function App() {
     };
 
     async function handleCardPlay(index) {
-        if (connection && started && !actionMade) {
+        if (connection && started) {
             try {
                 // Send the entire card object to the server
                 console.log("Invoking PlayCard with card:", index);
@@ -277,20 +279,21 @@ function App() {
         }
     }
 
+    // ! Removed to make console work
     // handle undo command and passing to next player
-    useEffect(() => {
-        let timer = null;
-        if (actionMade) {
-            timer = setTimeout(() => {
-                connection.invoke("NextPlayer", roomName, action.toString());
-                setActionMade(false);
-            }, 3000);
-        }
+    // useEffect(() => {
+    //     let timer = null;
+    //     if (actionMade) {
+    //         timer = setTimeout(() => {
+    //             connection.invoke("NextPlayer", roomName, action.toString());
+    //             setActionMade(false);
+    //         }, 3000);
+    //     }
 
-        return () => {
-            clearTimeout(timer);
-        };
-    }, [actionMade]);
+    //     return () => {
+    //         clearTimeout(timer);
+    //     };
+    // }, [actionMade]);
 
     // Cleanup on component unmount
     useEffect(() => {
@@ -460,7 +463,7 @@ function App() {
                     </div>
                 )}
 
-                {started && currentPlayer === userName && !actionMade && (
+                {started && currentPlayer === userName && (
                     <div className="draw-card-controls" style={{ margin: '20px 0' }}>
                         <button
                             onClick={async () => {
@@ -510,11 +513,12 @@ function App() {
                 )}
 
                 {/* Undo Command Button */}
-                {started && currentPlayer === userName && actionMade && (
+                
+                {/* {started && currentPlayer === userName && actionMade && (
                     <div>
                         <button onClick={handleUndoCommand}>Undo</button>
                     </div>
-                )}
+                )} */}
 
                 {started && (
                     <div className="bottom-panel">

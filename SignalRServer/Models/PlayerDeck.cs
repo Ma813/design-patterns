@@ -14,10 +14,22 @@ public class PlayerDeck
 
     public ISingleClientProxy? _client;
 
-    public PlayerDeck(string username, CardGenerator generator, int initialCardCount = 7, ISingleClientProxy? client = null)
+    public PlayerDeck(string username, CardGenerator generator, int initialCardCount = 6, ISingleClientProxy? client = null, bool testMode = true)// testMode = true to get test win scenarios
     {
         Cards = [];
         Username = username;
+        _client = client;
+
+        if (testMode)
+        {
+            // For testing purposes, generate cards which guarantee a win condition can be tested quickly
+            Cards.Add(new NumberCard("red", 0));
+            Cards.Add(new NumberCard("blue", 0));
+            Cards.Add(new NumberCard("green", 0));
+            Cards.Add(new NumberCard("yellow", 0));
+            return;
+        }
+
         Cards.Add(UnoCard.GenerateSuperCard());
         _generator = generator;
 
@@ -26,8 +38,6 @@ public class PlayerDeck
             UnoCard card = UnoCard.GenerateCard();
             Cards.Add(card);
         }
-        
-        _client = client;
     }
 
     public void AddCard(UnoCard card)
@@ -58,7 +68,7 @@ public class PlayerDeck
     public void Accept(IDeckVisitor visitor)
     {
         visitor.Visit(this);
-    } 
+    }
 
 
     public int Count => Cards.Count;

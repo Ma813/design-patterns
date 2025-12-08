@@ -4,6 +4,7 @@
 using Microsoft.AspNetCore.SignalR;
 using SignalRServer.AnnoyingEffects;
 using SignalRServer.Card;
+using SignalRServer.Expressions;
 using SignalRServer.Hubs;
 using SignalRServer.Models.CardPlacementStrategies;
 using SignalRServer.Models.Chat;
@@ -47,6 +48,7 @@ public class Facade
     public async Task JoinRoom(string roomName, string userName, IHubCallerClients Clients, HubCallerContext Context, IGroupManager Groups, int botAmount = 0, string gameMode = "Classic", string cardPlacementStrategy = "UnoPlacementStrategy", string theme = "Classic")
     {
         var connectionId = Context.ConnectionId;
+
 
         // Remove user from previous room if any
         if (UserRooms.ContainsKey(connectionId))
@@ -118,6 +120,8 @@ public class Facade
         }
 
         await Clients.Group(roomName).SendAsync("UserJoined", usernames);
+        SystemMessages.UserJoined(game, connectionId, userName, roomName, Clients).Wait();
+
         var themeInfo = new
         {
             cardDesign = game.ThemeFactory.CreateCardDesign().GetDesignInfo(),
@@ -127,7 +131,7 @@ public class Facade
         await Clients.Group(roomName).SendAsync("ThemeSelected", themeInfo);
     }
 
-    public async Task StartGame(string roomName, string userName, IHubCallerClients? Clients)
+    public async Task StartGame(string roomName, string userName, IHubCallerClients? Clients, string connectionId = "bot")
     {
         AbstractGame game = Games[roomName];
         game.Start(Clients);
@@ -137,25 +141,29 @@ public class Facade
             GameForSending gameForSeding = new GameForSending(game, player.Value);
             await Clients.Client(player.Key).SendAsync("GameStarted", gameForSeding);
         }
+        SystemMessages.GameStarted(game, userName, connectionId, Clients).Wait();
     }
 
-    public async Task DrawCard(string roomName, string userName, IHubCallerClients<IClientProxy>? Clients)
+    public async Task<string> DrawCard(string roomName, string userName, IHubCallerClients<IClientProxy>? Clients, string connectionId = "bot")
     {
         if (Clients == null)
         {
-            Clients = (IHubCallerClients<IClientProxy>)new NullClients();
+            Clients = new NullClients();
         }
 
         AbstractGame game = Games[roomName];
         game.DrawCard(userName);
+        SystemMessages.CardDrawn(game, userName, connectionId, Clients).Wait();
+
         await notifyPlayers(game);
+        return "OK";
     }
 
-    public async Task<bool> PlayCard(string roomName, string userName, int cardIndex, IHubCallerClients<IClientProxy>? Clients)
+    public async Task<string> PlayCard(string roomName, string userName, int cardIndex, IHubCallerClients<IClientProxy>? Clients, string connectionId = "bot")
     {
         if (Clients == null)
         {
-            Clients = (IHubCallerClients<IClientProxy>)new NullClients();
+            Clients = new NullClients();
         }
 
         AbstractGame game = Games[roomName];
@@ -164,23 +172,25 @@ public class Facade
         if (playerDeck == null)
         {
             await Clients.Caller.SendAsync("Error", "Player not found");
-            return false;
+            return "Error: Player not found";
         }
 
         string result = game.PlayCard(userName, playerDeck.Cards[cardIndex]);
         if (result == "WIN")
         {
+            SystemMessages.CardPlayed(game, userName, connectionId, Clients, true).Wait();
             await _hubContext.Clients.Group(roomName).SendAsync("GameEnded", $"{userName} has won the game!");
-            return true;
+            return "WIN";
         }
         if (result != "OK")
         {
             await Clients.Caller.SendAsync("Error", result);
-            return false;
+            return "Error: " + result;
         }
+        SystemMessages.CardPlayed(game, userName, connectionId, Clients, false).Wait();
 
         await notifyPlayers(game);
-        return true;
+        return "OK";
     }
 
     public async Task UndoCard(string roomName, string userName, IHubCallerClients<IClientProxy>? Clients)
@@ -282,13 +292,19 @@ public class Facade
         await message.SendMessageAsync(_hubContext.Clients.Group(roomName));
     }
 
+    public string InterpretExpression(IExpression expression, string command, HubCallerContext Context, IHubCallerClients clients, IGroupManager groups)
+    {
+        return expression.Interpret(command, Context, clients, groups);
+    }
+
+
     public async Task notifyPlayers(AbstractGame game)
     {
         foreach (var player in game.Players)
         {
 
             PlayerDeck playerDeck = game.PlayerDecks.FirstOrDefault(pd => pd.Username == player.Value);
-            
+
             playerDeck.Accept(new LoggerVisitor());
             playerDeck.Accept(new ScoreVisitor());
             playerDeck.Accept(new CardsVisitor());
@@ -298,9 +314,6 @@ public class Facade
             GameForSending gameForSending = new GameForSending(game, player.Value);
             await _hubContext.Clients.Client(player.Key).SendAsync("GameStatus", gameForSending);
         }
-        
-
-
 
         foreach (var bot in game.Bots)
         {
@@ -341,6 +354,18 @@ public class Facade
             Console.WriteLine($"JoinRoomThroughDirector error: {ex}");
             throw; // rethrow to see it in frontend HubException
         }
+    }
+
+    public AbstractGame? GetGameByConnection(HubCallerContext context)
+    {
+        string connectionId = context.ConnectionId;
+
+        if (UserRooms.TryGetValue(connectionId, out string roomName) && Games.ContainsKey(roomName))
+        {
+            return Games[roomName];
+        }
+
+        return null; // user is not in a game
     }
 
 }

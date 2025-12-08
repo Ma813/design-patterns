@@ -117,6 +117,11 @@ public abstract class AbstractGame : ISubject
             End();
             return "WIN";
         }
+
+        if (this is not DrawToMatchGame)
+        {
+            NextPlayer(Action.place);
+        }
         return "OK";
     }
 }

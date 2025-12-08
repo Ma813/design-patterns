@@ -1,0 +1,44 @@
+.terminal-container {
+    background: #111;
+    color: #00ff66;
+    font-family: monospace;
+    width: 100%;
+    height: 100vh;          /* ensure a height so .terminal-output can scroll */
+    display: flex;
+    flex-direction: column;
+}
+
+.terminal-output {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+    white-space: pre-wrap;
+    scroll-behavior: auto; /* can be 'smooth' if you want animated scroll */
+}
+
+.terminal-line {
+    margin-bottom: 4px;
+}
+
+.terminal-input-row {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    border-top: 1px solid #333;
+    background: #000;
+}
+
+.prompt {
+    margin-right: 6px;
+    color: #00cc55;
+}
+
+.terminal-input {
+    flex: 1;
+    background: #000;
+    color: #00ff66;
+    border: none;
+    outline: none;
+    font-family: monospace;
+    font-size: 16px;
+}
