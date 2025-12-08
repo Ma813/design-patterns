@@ -408,6 +408,7 @@ public class Facade
     {
         if(_chatMediators.TryGetValue(roomName, out var mediator))
         {
+            //System.Console.WriteLine("SendTextMessageThroughMediator");
             await mediator.SendMessage(sender, text, roomName);
         }
     }

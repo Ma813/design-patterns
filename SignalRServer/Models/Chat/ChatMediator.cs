@@ -48,7 +48,7 @@ public class ChatMediator : IChatMediator
 
         foreach(var (username, colleague) in _colleagues)
         {
-            if(username == senderUsername) return;
+            // if(username == senderUsername) return;
 
             if(_mutedBy.ContainsKey(username) && _mutedBy[username].Contains(senderUsername))
             {
@@ -56,6 +56,7 @@ public class ChatMediator : IChatMediator
                 continue;
             }
 
+            //System.Console.WriteLine("{0} sending to {1}", senderUsername, username);
             await colleague.Receive(message);
         }
     }

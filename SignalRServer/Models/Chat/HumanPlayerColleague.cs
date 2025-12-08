@@ -23,6 +23,7 @@ public class HumanPlayerColleague : IChatColleague
 
     public async Task Receive(Message message)
     {
+        //System.Console.WriteLine("{0} received the message", Username);
         await message.SendMessageAsync(_client);
     }
 
