@@ -76,12 +76,8 @@ public class DrawToMatchGame : AbstractGame
             // In DrawToMatch, if the action was drawing a card, the same player plays again
             return;
         }
-        //CurrentPlayerIndex = (CurrentPlayerIndex + Direction + PlayerDecks.Count) % PlayerDecks.Count;
 
-        var iterator = GetTurnIterator();
-        _turnContainer!.SetDirection(Direction);  // In case direction changed (reverse card)
-        iterator.Next();
-        CurrentPlayerIndex = iterator.CurrentIndex;
+        base.NextPlayer(action);
     }
 
     public override void NextDrawCard()

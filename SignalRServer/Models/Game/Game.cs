@@ -68,15 +68,6 @@ public class Game : AbstractGame
         return "OK";
     }
 
-    public override void NextPlayer(Action actionType)
-    {
-        // CurrentPlayerIndex = (CurrentPlayerIndex + Direction + PlayerDecks.Count) % PlayerDecks.Count;
-        var iterator = GetTurnIterator();
-        _turnContainer!.SetDirection(Direction);  // In case direction changed (reverse card)
-        iterator.Next();
-        CurrentPlayerIndex = iterator.CurrentIndex;
-    }
-
     public override void NextDrawCard()
     {
         var next = (CurrentPlayerIndex + Direction + PlayerDecks.Count) % PlayerDecks.Count;

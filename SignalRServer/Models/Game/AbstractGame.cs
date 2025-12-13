@@ -110,7 +110,13 @@ public abstract class AbstractGame : ISubject
     public abstract void End();
     public abstract void DrawCard(string username);
     public abstract string UndoCard(string username);
-    public abstract void NextPlayer(Action action);
+    public virtual void NextPlayer(Action action)
+    {
+        var iterator = GetTurnIterator();
+        _turnContainer!.SetDirection(Direction);  // In case direction changed (reverse card)
+        iterator.Next();
+        CurrentPlayerIndex = iterator.CurrentIndex;
+    }
     public abstract void NextDrawCard();
 
     public async Task NotifyBots()
