@@ -12,15 +12,15 @@ public class EndlessGame : AbstractGame
     }
 
 
-    public override void Start(IHubCallerClients? client = null)
-    {
-        IsStarted = true;
-        foreach (var player in Players)
-        {
-            PlayerDeck deck = new(player.Value, client: client?.Client(player.Key));
-            PlayerDecks.Add(deck);
-        }
-    }
+    // public override void Start(IHubCallerClients? client = null)
+    // {
+    //     IsStarted = true;
+    //     foreach (var player in Players)
+    //     {
+    //         PlayerDeck deck = new(player.Value, client: client?.Client(player.Key));
+    //         PlayerDecks.Add(deck);
+    //     }
+    // }
 
     public override void End()
     {
@@ -66,7 +66,12 @@ public class EndlessGame : AbstractGame
 
     public override void NextPlayer(Action action)
     {
-        CurrentPlayerIndex = (CurrentPlayerIndex + Direction + PlayerDecks.Count) % PlayerDecks.Count;
+        //CurrentPlayerIndex = (CurrentPlayerIndex + Direction + PlayerDecks.Count) % PlayerDecks.Count;
+
+        var iterator = GetTurnIterator();
+        _turnContainer!.SetDirection(Direction);  // In case direction changed (reverse card)
+        iterator.Next();
+        CurrentPlayerIndex = iterator.CurrentIndex;
     }
 
     public override void NextDrawCard()

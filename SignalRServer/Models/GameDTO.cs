@@ -1,6 +1,7 @@
 using SignalRServer.Card;
 using SignalRServer.Models.Commands;
 using SignalRServer.Models.Game;
+using SignalRServer.Models.Iterator;
 
 namespace SignalRServer.Models;
 
@@ -31,10 +32,16 @@ public class GameForSending
         direction = game.Direction;
         PlayerDeck = game.PlayerDecks.FirstOrDefault(pd => pd.Username == userName);
         CardCount = game.PlacedCardCount;
+
+        
         if (PlayerDeck == null || PlayerDeck.history == null) return;
-        foreach (Command cmd in PlayerDeck.history.history)
+
+        IIterator<Command> iterator = PlayerDeck.history.CreateIterator(true, c => c is DrawCardCommand);
+        while (!iterator.IsDone())
         {
-            commandHistory.Add(cmd.ToString());
+            commandHistory.Add(iterator.Current().ToString());
+
+            iterator.Next();
         }
     }
 
