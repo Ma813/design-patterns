@@ -32,7 +32,7 @@ public abstract class Command
         {
             topCardBackup = new PowerCard(game.TopCard.Color, pc.PowerType);
         }
-        else if (game.TopCard is CardDecorator wc)
+        else if (game.TopCard is CompositeCard wc)
         {
             topCardBackup = wc;
         }

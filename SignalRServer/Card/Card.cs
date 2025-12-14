@@ -3,7 +3,7 @@ using SignalRServer.Models.Game;
 
 namespace SignalRServer.Card;
 
-public abstract partial class UnoCard
+public abstract partial class UnoCard : ICardComponent
 {
     private static readonly Random _rng = new Random();
     public static readonly List<string> PossibleColors = new List<string> { "red", "green", "blue", "yellow" };
@@ -23,6 +23,27 @@ public abstract partial class UnoCard
     public virtual bool CanPlayOn(UnoCard topCard, ICardPlacementStrategy cardPlacementStrategy)
     {
         return cardPlacementStrategy.CanPlaceCard(topCard, this);
+    }
+
+    // Default implementation for leaf nodes (throws exceptions as they don't support children)
+    public virtual void Add(ICardComponent component)
+    {
+        throw new NotSupportedException("Cannot add components to a leaf card.");
+    }
+
+    public virtual void Remove(ICardComponent component)
+    {
+        throw new NotSupportedException("Cannot remove components from a leaf card.");
+    }
+
+    public virtual ICardComponent GetChild(int index)
+    {
+        throw new NotSupportedException("Leaf cards don't have children.");
+    }
+
+    public virtual int GetChildCount()
+    {
+        return 0;
     }
 
     public override string ToString()
@@ -62,26 +83,29 @@ public partial class UnoCard
     public static UnoCard GenerateSuperCard()
     {
         var random = new Random();
-
-        // Start with a base card (using Bridge pattern)
         string color = PossibleColors[random.Next(PossibleColors.Count)];
+
+        // Create a composite card using Composite pattern
+        var compositeCard = new CompositeCard(color);
+
+        // Add base power card
         string[] powerTypes = { "Skip", "Draw" };
         string powerType = powerTypes[random.Next(powerTypes.Length)];
-        UnoCard baseCard = new PowerCard(color, powerType);
+        compositeCard.Add(new PowerCard(color, powerType));
 
-        // Apply 3 layers of decorators (Decorator pattern)
+        // Add additional effects (3 random effects)
         for (int i = 0; i < 3; i++)
         {
             if (random.Next(2) == 0)
             {
-                baseCard = new SkipTurnDecorator(baseCard);
+                compositeCard.Add(new SkipEffectCard(color));
             }
             else
             {
-                baseCard = new DrawCardDecorator(baseCard);
+                compositeCard.Add(new DrawEffectCard(color));
             }
         }
 
-        return baseCard;
+        return compositeCard;
     }
 }
