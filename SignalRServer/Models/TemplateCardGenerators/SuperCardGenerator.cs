@@ -31,20 +31,30 @@ public sealed class SuperCardGenerator : CardGenerator
 
     protected override UnoCard GenerateSuperCard()
     {
+        var random = new Random();
         string color = PossibleColors[RNG.Next(PossibleColors.Count)];
-        string[] power = { "Skip", "Draw" };
-        string powerType = power[RNG.Next(power.Length)];
 
-        UnoCard baseCard = new PowerCard(color, powerType);
+        // Create a composite card using Composite pattern
+        var compositeCard = new CompositeCard(color);
 
+        // Add base power card
+        string[] powerTypes = { "Skip", "Draw" };
+        string powerType = powerTypes[random.Next(powerTypes.Length)];
+        compositeCard.Add(new PowerCard(color, powerType));
+
+        // Add additional effects (3 random effects)
         for (int i = 0; i < 3; i++)
         {
-            if (RNG.Next(2) == 0)
-                baseCard = new SkipTurnDecorator(baseCard);
+            if (random.Next(2) == 0)
+            {
+                compositeCard.Add(new SkipEffectCard(color));
+            }
             else
-                baseCard = new DrawCardDecorator(baseCard);
+            {
+                compositeCard.Add(new DrawEffectCard(color));
+            }
         }
 
-        return baseCard;
+        return compositeCard;
     }
 }
