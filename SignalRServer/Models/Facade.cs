@@ -1,13 +1,16 @@
 //This class represents a player client in the SignalR server context.
 //It is a hub for managing player connections
 
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.SignalR;
 using SignalRServer.AnnoyingEffects;
 using SignalRServer.Card;
 using SignalRServer.Expressions;
 using SignalRServer.Hubs;
+using SignalRServer.Model.Chat.Colleagues;
 using SignalRServer.Models.CardPlacementStrategies;
 using SignalRServer.Models.Chat;
+using SignalRServer.Models.Chat.Colleagues;
 using SignalRServer.Models.Game;
 using SignalRServer.Models.ThemeFactories;
 using SignalRServer.Visitors;
@@ -36,9 +39,14 @@ public class Facade
 
     private static readonly Dictionary<string, string> UsernameToConnectionId = new Dictionary<string, string>();
 
+    private readonly Dictionary<string, ChatMediator> _chatMediators = new();
+
     private static readonly SoundEffectAdaptee annoyingSoundAdaptee = new SoundEffectAdaptee();
     AnnoyingFlashbang annoyingFlashbang = new AnnoyingFlashbang();
     AnnoyingSoundEffect annoyingSoundEffect;
+
+    private readonly Dictionary<string, SystemColleague> _systemColleagues = new();
+
     public Facade(IHubContext<PlayerHub> hubContext)
     {
         _hubContext = hubContext;
@@ -122,6 +130,9 @@ public class Facade
         await Clients.Group(roomName).SendAsync("UserJoined", usernames);
         SystemMessages.UserJoined(game, connectionId, userName, roomName, Clients).Wait();
 
+        // Message into the chat, that a new player joined
+        if (_systemColleagues.TryGetValue(roomName, out var systemColleague)) await systemColleague.AnnouncePlayerJoined(userName);
+
         var themeInfo = new
         {
             cardDesign = game.ThemeFactory.CreateCardDesign().GetDesignInfo(),
@@ -141,7 +152,11 @@ public class Facade
             GameForSending gameForSeding = new GameForSending(game, player.Value);
             await Clients.Client(player.Key).SendAsync("GameStarted", gameForSeding);
         }
+
+        await SetupChatMediator(roomName, game, Clients);
+
         SystemMessages.GameStarted(game, userName, connectionId, Clients).Wait();
+        if (_systemColleagues.TryGetValue(roomName, out var systemColleague)) await systemColleague.AnnounceGameStarted();
     }
 
     public async Task<string> DrawCard(string roomName, string userName, IHubCallerClients<IClientProxy>? Clients, string connectionId = "bot")
@@ -179,6 +194,10 @@ public class Facade
         if (result == "WIN")
         {
             SystemMessages.CardPlayed(game, userName, connectionId, Clients, true).Wait();
+
+            // announce winner in the messages
+            if (_systemColleagues.TryGetValue(roomName, out var systemColleague)) await systemColleague.AnnounceWinner(userName);
+
             await _hubContext.Clients.Group(roomName).SendAsync("GameEnded", $"{userName} has won the game!");
             return "WIN";
         }
@@ -188,6 +207,11 @@ public class Facade
             return "Error: " + result;
         }
         SystemMessages.CardPlayed(game, userName, connectionId, Clients, false).Wait();
+
+        if(playerDeck.Cards.Count == 1)
+        {
+            if (_systemColleagues.TryGetValue(roomName, out var systemColleague)) await systemColleague.AnnounceUnoCall(userName);
+        }
 
         await notifyPlayers(game);
         return "OK";
@@ -272,18 +296,23 @@ public class Facade
 
     public async Task ToggleMutePlayer(string roomname, string player, IHubCallerClients Clients, HubCallerContext Context)
     {
-        if (!UsernameToConnectionId.ContainsKey(player))
+        if (!UsernameToConnectionId.ContainsKey(player) && player != "SYSTEM")
         {
             return;
         }
-        string playerId = UsernameToConnectionId[player];
-        IClientProxy muted = Clients.Client(playerId);
-        IClientProxy muting = Clients.Caller;
+
+        System.Console.WriteLine("ToggleMutePlayer: " + player);
+
+        if(player != "SYSTEM"){
+            string playerId = UsernameToConnectionId[player];
+            IClientProxy muted = Clients.Client(playerId);
+            IClientProxy muting = Clients.Caller;
+        }
 
         string username = UsernameToConnectionId.FirstOrDefault(x => x.Value == Context.ConnectionId).Key;
 
-
         await annoyingSoundAdaptee.ToggleMutePlayer(player, username);
+        _chatMediators[roomname].Mute(player, username);
     }
 
     public async Task SendTextMessage(string roomName, string sender, string text)
@@ -308,8 +337,6 @@ public class Facade
             playerDeck.Accept(new LoggerVisitor());
             playerDeck.Accept(new ScoreVisitor());
             playerDeck.Accept(new CardsVisitor());
-
-
 
             GameForSending gameForSending = new GameForSending(game, player.Value);
             await _hubContext.Clients.Client(player.Key).SendAsync("GameStatus", gameForSending);
@@ -368,4 +395,42 @@ public class Facade
         return null; // user is not in a game
     }
 
+    public async Task SetupChatMediator(string roomName, AbstractGame game, IHubCallerClients clients)
+    {
+        var mediator = new ChatMediator(roomName);
+
+        foreach(var player in game.Players.Where(p => !p.Key.StartsWith("bot-")))
+        {
+            var humanColleague = new HumanPlayerColleague(
+                player.Value,
+                player.Key,
+                clients.Client(player.Key)
+            );
+
+            mediator.Register(humanColleague);
+        }
+
+        foreach(var bot in game.Bots)
+        {
+            var botColleague = new BotPlayerColleague(bot.UserName);
+            mediator.Register(botColleague);
+            await botColleague.SendRandomMessage(roomName);
+        }
+
+        // Register system colleague and store reference
+        var systemColleague = new SystemColleague(_hubContext, roomName);
+        mediator.Register(systemColleague);
+        _systemColleagues[roomName] = systemColleague;
+
+        _chatMediators[roomName] = mediator;
+    }
+
+    public async Task SendTextMessageThroughMediator(string roomName, string sender, string text)
+    {
+        if(_chatMediators.TryGetValue(roomName, out var mediator))
+        {
+            //System.Console.WriteLine("SendTextMessageThroughMediator");
+            await mediator.SendMessage(sender, text, roomName);
+        }
+    }
 }
