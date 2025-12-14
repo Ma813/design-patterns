@@ -24,6 +24,10 @@ public abstract class AbstractGame : ISubject
     public IUnoThemeFactory ThemeFactory { get; set; }
     public Dictionary<string, int> PlacedCardCount { get; set; }
 
+    // Validation chain
+    public List<ICardPlayValidator> validation = new List<ICardPlayValidator>{
+        new NullValidator(), new TurnValidator(), new CardOwnershipValidator(), new PlacementStrategyValidator()};
+
     protected AbstractGame(string roomName)
     {
         RoomName = roomName;
@@ -38,6 +42,10 @@ public abstract class AbstractGame : ISubject
         PlacedCardCount = [];
 
         AttachObservers();
+
+        // set up validation chain
+        for(int i = 0; i < validation.Count - 1; i++) validation[i].SetNext(validation[i+1]);
+        validation[validation.Count - 1].SetNext(null);
     }
 
     public ICardPlacementStrategy GetPlacementStrategy()
@@ -93,18 +101,7 @@ public abstract class AbstractGame : ISubject
     {
         var playerDeck = PlayerDecks.FirstOrDefault(pd => pd.Username == username);
 
-        NullValidator nv = new NullValidator();
-        TurnValidator tv = new TurnValidator();
-        CardOwnershipValidator cov = new CardOwnershipValidator();
-        PlacementStrategyValidator psv = new PlacementStrategyValidator();
-
-        nv.SetNext(tv);
-        tv.SetNext(cov);
-        cov.SetNext(psv);
-
-        BaseCardPlayValidator validator = nv;
-
-        var result = validator.Validate(playerDeck, card, this);
+        var result = validation.First().Validate(playerDeck, card, this);
         if(result != "OK") return result;
         
         // if (playerDeck == null) return "Player not found";
