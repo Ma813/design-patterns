@@ -17,6 +17,7 @@ public abstract class AbstractGame : ISubject
     public int CurrentPlayerIndex { get; set; }
     public int Direction { get; set; } // 1 for clockwise, -1 for counter-clockwise
     public List<IBotClientPrototype> Bots { get; set; } = [];
+    public readonly CardGenerator Generator;
 
     // TODO: see if changing this from protected to public causes any issues
     public ICardPlacementStrategy CardPlacementStrategy { get; set; }
@@ -27,8 +28,9 @@ public abstract class AbstractGame : ISubject
     {
         RoomName = roomName;
         PlayerDecks = [];
-        Players = [];
-        TopCard = UnoCard.GenerateCard();
+        Players = [];  
+        Generator = new StandardCardGenerator(UnoCard.PossibleColors);
+        TopCard = Generator.GenerateRandomCard();
         IsStarted = false;
         CurrentPlayerIndex = 0;
         Direction = 1;
