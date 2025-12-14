@@ -50,9 +50,9 @@ public class ChatMediator : IChatMediator
         {
             // if(username == senderUsername) return;
 
-            if(_mutedBy.ContainsKey(username) && _mutedBy[username].Contains(senderUsername))
+            if(_mutedBy.ContainsKey(senderUsername) && _mutedBy[senderUsername].Contains(username))
             {
-                logger.LogInfo($"[ChatMediator] Message blocked: {username} has muted {senderUsername}");
+                logger.LogInfo($"[ChatMediator] Message blocked: {senderUsername} has muted {username}");
                 continue;
             }
 
@@ -65,9 +65,14 @@ public class ChatMediator : IChatMediator
     {
         if(!_mutedBy.ContainsKey(muter))
             _mutedBy[muter] = new HashSet<string>();
-        
-        _mutedBy[muter].Add(target);
-        logger.LogInfo($"[ChatMediator] {muter} muted {target}");
+
+        if (_mutedBy[muter].Contains(target)){
+            _mutedBy[muter].Remove(target);
+        }
+        else {
+            _mutedBy[muter].Add(target);
+            logger.LogInfo($"[ChatMediator] {muter} muted {target}");
+        }
     }
 
     public void Unmute(string muter, string target)

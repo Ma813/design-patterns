@@ -363,6 +363,14 @@ function App() {
                 {started && playerAmounts && Object.keys(playerAmounts).length > 0 && (
                     <div className="player-amounts-container" style={{ margin: '20px 0' }}>
                         <h3>Player Card Amounts:</h3>
+                        <PlayerCardInfo
+                            key={"SYSTEM"}
+                            playerName={"SYSTEM"}
+                            amount={0}
+                            isYou={false}
+                            connection={connection}
+                            roomName={roomName}
+                        />
                         {Object.entries(playerAmounts).map(([playerName, amount]) => (
                             <PlayerCardInfo
                                 key={playerName}
