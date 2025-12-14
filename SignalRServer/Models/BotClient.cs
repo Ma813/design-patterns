@@ -1,5 +1,6 @@
 using System.Runtime.CompilerServices;
 using SignalRServer.Models.Game;
+using SignalRServer.Models.Iterator;
 namespace SignalRServer.Models;
 
 public class BotClient : IBotClientPrototype
@@ -89,17 +90,28 @@ public class BotClient : IBotClientPrototype
 
             // Simple bot logic: draw a card if no playable card, else play the first playable card
             var playerDeck = game.PlayerDecks.First(pd => pd.Username == UserName);
-            // TODO Change logic to find a playable card to match ruleset
-            var playableCardIndex = playerDeck.Cards.FindIndex(card =>
-                card.CanPlayOn(game.TopCard, game.GetPlacementStrategy()));
+            // // TODO Change logic to find a playable card to match ruleset
+            // var playableCardIndex = playerDeck.Cards.FindIndex(card =>
+            //     card.CanPlayOn(game.TopCard, game.GetPlacementStrategy()));
 
-            if (playableCardIndex != -1)
+            var cardContainer = new PlayableCardContainer(
+                playerDeck.Cards,
+                game.TopCard,
+                game.GetPlacementStrategy()
+            );
+            var cardIterator = (PlayableCardIterator)cardContainer.CreateIterator();
+
+            if (!cardIterator.IsDone())
             {
-                logger.LogInfo($"{UserName} (Bot) plays {playerDeck.Cards[playableCardIndex].Color} {playerDeck.Cards[playableCardIndex].Digit}");
+                // Get the index of the first playable card
+                int playableCardIndex = cardIterator.CurrentIndex;
+                
+                logger.LogInfo($"{UserName} (Bot) plays {playerDeck.Cards[playableCardIndex].Color} {playerDeck.Cards[playableCardIndex].Name}");
+                logger.LogInfo($"  Found using iterator - playable indices: [{string.Join(", ", cardIterator.GetAllPlayableIndices())}]");
+                
                 game.NextPlayer(Action.place);
                 await facade.PlayCard(game.RoomName, UserName, playableCardIndex, null);
 
-                // Brag about winning
                 if (playerDeck.Cards.Count == 0)
                 {
                     await facade.SendTextMessageThroughMediator(game.RoomName, UserName, "I win! Better luck next time humans!");
@@ -108,11 +120,13 @@ public class BotClient : IBotClientPrototype
             }
             else
             {
-                logger.LogInfo($"{UserName} (Bot) has no playable card and draws a card.");
+                // No playable card found by iterator
+                logger.LogInfo($"{UserName} (Bot) has no playable card (iterator found 0 matches). Drawing a card.");
                 game.NextPlayer(Action.draw);
                 await facade.DrawCard(game.RoomName, UserName, null);
                 await facade.notifyPlayers(game);
             }
+            
             logger.LogInfo($"{UserName} has: {string.Join(", ", playerDeck.Cards.Select(c => c.Color + " " + c.Name))}");
         }
     }

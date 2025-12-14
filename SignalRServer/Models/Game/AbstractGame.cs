@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Card;
 using SignalRServer.Models.CardPlacementStrategies;
 using SignalRServer.Models.Commands;
+using SignalRServer.Models.Iterator;
 using SignalRServer.Models.ThemeFactories;
 
 namespace SignalRServer.Models.Game;
@@ -24,6 +25,8 @@ public abstract class AbstractGame : ISubject
     public IUnoThemeFactory ThemeFactory { get; set; }
     public Dictionary<string, int> PlacedCardCount { get; set; }
 
+    protected PlayerTurnContainer? _turnContainer;
+    protected PlayerTurnIterator? _turnIterator;
     // Validation chain
     public List<ICardPlayValidator> validation = new List<ICardPlayValidator>{
         new NullValidator(), new TurnValidator(), new CardOwnershipValidator(), new PlacementStrategyValidator()};
@@ -57,11 +60,72 @@ public abstract class AbstractGame : ISubject
     {
         CardPlacementStrategy = strategy;
     }
-    public abstract void Start(IHubCallerClients? clients = null);
+
+    protected void InitializeTurnIterator()
+    {
+        _turnContainer = new PlayerTurnContainer(PlayerDecks, Direction);
+        _turnIterator = (PlayerTurnIterator)_turnContainer.CreateIterator();
+    }
+
+    public PlayerTurnIterator GetTurnIterator()
+    {
+        if (_turnIterator == null || _turnContainer == null)
+        {
+            InitializeTurnIterator();
+        }
+        return _turnIterator!;
+    }
+
+    public virtual void NextPlayerWithIterator()
+    {
+        var iterator = GetTurnIterator();
+        
+        // Update direction in aggregate if it changed (reverse card)
+        _turnContainer!.SetDirection(Direction);
+        
+        // Move to next player
+        iterator.Next();
+        CurrentPlayerIndex = iterator.CurrentIndex;
+    }
+
+    public virtual void SkipNextPlayer()
+    {
+        var iterator = GetTurnIterator();
+        _turnContainer!.SetDirection(Direction);
+        iterator.Skip(2); // Skip to the player after next
+        CurrentPlayerIndex = iterator.CurrentIndex;
+    }
+
+    public PlayerDeck PeekNextPlayer()
+    {
+        var iterator = GetTurnIterator();
+        _turnContainer!.SetDirection(Direction);
+        return iterator.PeekNext();
+    }
+
+    public void Start(IHubCallerClients? clients = null)
+    {
+        IsStarted = true;
+        foreach (var player in Players)
+        {
+            PlayerDeck deck = new(player.Value, client: clients?.Client(player.Key));
+            PlayerDecks.Add(deck);
+        }
+        
+        // *** INITIALIZE TURN ITERATOR ***
+        InitializeTurnIterator();
+    }
+
     public abstract void End();
     public abstract void DrawCard(string username);
     public abstract string UndoCard(string username);
-    public abstract void NextPlayer(Action action);
+    public virtual void NextPlayer(Action action)
+    {
+        var iterator = GetTurnIterator();
+        _turnContainer!.SetDirection(Direction);  // In case direction changed (reverse card)
+        iterator.Next();
+        CurrentPlayerIndex = iterator.CurrentIndex;
+    }
     public abstract void NextDrawCard();
 
     public async Task NotifyBots()

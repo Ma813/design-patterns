@@ -11,15 +11,15 @@ public class DrawToMatchGame : AbstractGame
         RoomName = roomName;
     }
 
-    public override void Start(IHubCallerClients? client = null)
-    {
-        IsStarted = true;
-        foreach (var player in Players)
-        {
-            PlayerDeck deck = new(player.Value, Generator, client: client?.Client(player.Key));
-            PlayerDecks.Add(deck);
-        }
-    }
+    // public override void Start(IHubCallerClients? client = null)
+    // {
+    //     IsStarted = true;
+    //     foreach (var player in Players)
+    //     {
+    //         PlayerDeck deck = new(player.Value, client: client?.Client(player.Key));
+    //         PlayerDecks.Add(deck);
+    //     }
+    // }
 
     public override void End()
     {
@@ -76,7 +76,8 @@ public class DrawToMatchGame : AbstractGame
             // In DrawToMatch, if the action was drawing a card, the same player plays again
             return;
         }
-        CurrentPlayerIndex = (CurrentPlayerIndex + Direction + PlayerDecks.Count) % PlayerDecks.Count;
+
+        base.NextPlayer(action);
     }
 
     public override void NextDrawCard()

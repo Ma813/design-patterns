@@ -12,15 +12,15 @@ public class EndlessGame : AbstractGame
     }
 
 
-    public override void Start(IHubCallerClients? client = null)
-    {
-        IsStarted = true;
-        foreach (var player in Players)
-        {
-            PlayerDeck deck = new(player.Value,Generator, client: client?.Client(player.Key));
-            PlayerDecks.Add(deck);
-        }
-    }
+    // public override void Start(IHubCallerClients? client = null)
+    // {
+    //     IsStarted = true;
+    //     foreach (var player in Players)
+    //     {
+    //         PlayerDeck deck = new(player.Value, client: client?.Client(player.Key));
+    //         PlayerDecks.Add(deck);
+    //     }
+    // }
 
     public override void End()
     {
@@ -62,11 +62,6 @@ public class EndlessGame : AbstractGame
         playerDeck.Undo();
         //playerDeck.ExecuteCommand(new UndoCardCommand(this, playerDeck));
         return "OK";
-    }
-
-    public override void NextPlayer(Action action)
-    {
-        CurrentPlayerIndex = (CurrentPlayerIndex + Direction + PlayerDecks.Count) % PlayerDecks.Count;
     }
 
     public override void NextDrawCard()

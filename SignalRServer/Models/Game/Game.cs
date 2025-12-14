@@ -12,15 +12,15 @@ public class Game : AbstractGame
     }
 
 
-    public override void Start(IHubCallerClients? clients = null)
-    {
-        IsStarted = true;
-        foreach (var player in Players)
-        {
-            PlayerDeck deck = new(player.Value,Generator, client: clients?.Client(player.Key));
-            PlayerDecks.Add(deck);
-        }
-    }
+    // public override void Start(IHubCallerClients? clients = null)
+    // {
+    //     IsStarted = true;
+    //     foreach (var player in Players)
+    //     {
+    //         PlayerDeck deck = new(player.Value, client: clients?.Client(player.Key));
+    //         PlayerDecks.Add(deck);
+    //     }
+    // }
 
     public override void End()
     {
@@ -66,11 +66,6 @@ public class Game : AbstractGame
         playerDeck.Undo();
         //playerDeck.ExecuteCommand(new UndoCardCommand(this, playerDeck));
         return "OK";
-    }
-
-    public override void NextPlayer(Action actionType)
-    {
-        CurrentPlayerIndex = (CurrentPlayerIndex + Direction + PlayerDecks.Count) % PlayerDecks.Count;
     }
 
     public override void NextDrawCard()
