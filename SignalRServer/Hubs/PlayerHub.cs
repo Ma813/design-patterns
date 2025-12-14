@@ -68,7 +68,7 @@ public class PlayerHub : Hub
     public async Task SendMessage(string roomName, string sender, string text)
     {
         logger.LogInfo($"User {sender} sent a message in room {roomName}: {text}");
-        await facade.SendTextMessage(roomName, sender, text);
+        await facade.SendTextMessageThroughMediator(roomName, sender, text);
     }
 
     public async Task NextPlayer(string roomName, string actionType)

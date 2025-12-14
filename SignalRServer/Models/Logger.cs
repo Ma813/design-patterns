@@ -3,7 +3,7 @@ namespace SignalRServer.Models;
 public sealed class Logger
 {
     private static Logger? _instance = null;
-    private readonly bool toConsole;
+    private readonly bool toConsole = true;
 
     private Logger(bool toConsole)
     {

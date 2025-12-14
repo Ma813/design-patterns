@@ -9,10 +9,12 @@ public class PlayerDeck
 {
     public List<UnoCard> Cards { get; private set; }
     public string Username { get; private set; }
-    public CommandHistory history = new();
+    public CommandHistory history = new();   
+     private readonly CardGenerator _generator;
+
     public ISingleClientProxy? _client;
 
-    public PlayerDeck(string username, int initialCardCount = 6, ISingleClientProxy? client = null, bool testMode = true)// testMode = true to get test win scenarios
+    public PlayerDeck(string username, CardGenerator generator, int initialCardCount = 6, ISingleClientProxy? client = null, bool testMode = true)// testMode = true to get test win scenarios
     {
         Cards = [];
         Username = username;
@@ -29,6 +31,8 @@ public class PlayerDeck
         }
 
         Cards.Add(UnoCard.GenerateSuperCard());
+        _generator = generator;
+
         for (int i = 0; i < initialCardCount; i++)
         {
             UnoCard card = UnoCard.GenerateCard();
