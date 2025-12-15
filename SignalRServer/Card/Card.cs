@@ -70,7 +70,7 @@ public partial class UnoCard
         }
         else
         {
-            string[] powerTypes = { "Skip", "Draw", "NewRule" };
+            string[] powerTypes = { "Skip", "Draw","RestoreHand" };
             string powerType = powerTypes[_rng.Next(powerTypes.Length)];
             if (useFlyweight)
             {

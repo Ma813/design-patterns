@@ -42,9 +42,11 @@ public class Facade
 
     private readonly Dictionary<string, ChatMediator> _chatMediators = new();
 
-    private static readonly SoundEffectAdaptee annoyingSoundAdaptee = new SoundEffectAdaptee();
+    private readonly SoundEffectProxy soundEffectProxy;
+private readonly AnnoyingSoundEffect annoyingSoundEffect;
+
+
     AnnoyingFlashbang annoyingFlashbang = new AnnoyingFlashbang();
-    AnnoyingSoundEffect annoyingSoundEffect;
 
     private readonly Dictionary<string, SystemColleague> _systemColleagues = new();
 
@@ -53,7 +55,8 @@ public class Facade
     public Facade(IHubContext<PlayerHub> hubContext)
     {
         _hubContext = hubContext;
-        annoyingSoundEffect = new AnnoyingSoundEffect(annoyingSoundAdaptee);
+        soundEffectProxy = new SoundEffectProxy(new RealSoundEffect());
+        annoyingSoundEffect = new AnnoyingSoundEffect();
     }
 
     public async Task JoinRoom(string roomName, string userName, IHubCallerClients Clients, HubCallerContext Context, IGroupManager Groups, int botAmount = 0, string gameMode = "Classic", string cardPlacementStrategy = "UnoPlacementStrategy", string theme = "Classic")
@@ -400,7 +403,7 @@ public class Facade
 
         string username = UsernameToConnectionId.FirstOrDefault(x => x.Value == Context.ConnectionId).Key;
 
-        await annoyingSoundAdaptee.ToggleMutePlayer(player, username);
+        soundEffectProxy.ToggleMutePlayer(player, username);
         _chatMediators[roomname].Mute(player, username);
     }
 

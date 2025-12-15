@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Card;
 using SignalRServer.Models.Commands;
 using SignalRServer.Visitors;
+using SignalRServer.Models.Memento;
 
 namespace SignalRServer.Models;
 
@@ -9,12 +10,13 @@ public class PlayerDeck
 {
     public List<UnoCard> Cards { get; private set; }
     public string Username { get; private set; }
-    public CommandHistory history = new();   
-     private readonly CardGenerator _generator;
+    public CommandHistory history = new();
+    private readonly CardGenerator _generator;
+    private PlayerHandMemento? _lastTurnMemento;
 
     public ISingleClientProxy? _client;
 
-    public PlayerDeck(string username, CardGenerator generator, int initialCardCount = 6, ISingleClientProxy? client = null, bool testMode = true)// testMode = true to get test win scenarios
+    public PlayerDeck(string username, CardGenerator generator, int initialCardCount = 6, ISingleClientProxy? client = null, bool testMode = false)// testMode = true to get test win scenarios
     {
         Cards = [];
         Username = username;
@@ -30,12 +32,11 @@ public class PlayerDeck
             return;
         }
 
-        Cards.Add(UnoCard.GenerateSuperCard());
         _generator = generator;
 
         for (int i = 0; i < initialCardCount; i++)
         {
-            UnoCard card = UnoCard.GenerateCard();
+            UnoCard card = _generator.GenerateRandomCard();
             Cards.Add(card);
         }
     }
@@ -70,6 +71,19 @@ public class PlayerDeck
         visitor.Visit(this);
     }
 
+    public void SaveTurnState()
+    {
+        _lastTurnMemento = new PlayerHandMemento(Cards);
+    }
+
+    public bool RestoreLastTurnState()
+    {
+        if (_lastTurnMemento == null)
+            return false;
+
+        Cards = new List<UnoCard>(_lastTurnMemento.CardsSnapshot);
+        return true;
+    }
 
     public int Count => Cards.Count;
 }

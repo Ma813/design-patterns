@@ -49,7 +49,7 @@ public static class SystemMessages
         }
         if (ended)
         {
-            game.TopCard = UnoCard.GenerateCard(true); // Reset top card to avoid confusion
+            game.TopCard = game.Generator.GenerateRandomCard(); // Reset top card to avoid confusion
             foreach (var player in game.Players)
             {
                 if (player.Key != connectionId)

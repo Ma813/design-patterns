@@ -15,7 +15,7 @@ public class DrawCardCommand : Command
     {
         SaveBackup();
 
-        UnoCard newCard = UnoCard.GenerateCard();
+        UnoCard newCard = game.Generator.GenerateRandomCard();
         pd.Cards.Add(newCard);
 
         card = newCard;

@@ -40,7 +40,7 @@ public abstract class AbstractGame : ISubject
         RoomName = roomName;
         PlayerDecks = [];
         Players = [];  
-        Generator = new StandardCardGenerator(UnoCard.PossibleColors);
+        Generator = new SuperCardGenerator(UnoCard.PossibleColors);
         TopCard = Generator.GenerateRandomCard();
         IsStarted = false;
         CurrentPlayerIndex = 0;
@@ -184,6 +184,8 @@ public abstract class AbstractGame : ISubject
         // if (!card.CanPlayOn(TopCard, CardPlacementStrategy)) return "Card cannot be played on top of current top card";
 
         playerDeck.ExecuteCommand(new PlayCardCommand(this, playerDeck, card, CardPlacementStrategy));
+                playerDeck.SaveTurnState();
+
         if (playerDeck.Count == 0)
         {
             End();
