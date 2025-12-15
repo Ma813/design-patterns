@@ -33,16 +33,11 @@ public sealed class SuperCardGenerator : CardGenerator
     {
         var random = new Random();
         string color = PossibleColors[RNG.Next(PossibleColors.Count)];
-
-        // Create a composite card using Composite pattern
         var compositeCard = new CompositeCard(color);
-
-        // Add base power card
         string[] powerTypes = { "Skip", "Draw" };
         string powerType = powerTypes[random.Next(powerTypes.Length)];
         compositeCard.Add(new PowerCard(color, powerType));
 
-        // Add additional effects (3 random effects)
         for (int i = 0; i < 3; i++)
         {
             if (random.Next(2) == 0)

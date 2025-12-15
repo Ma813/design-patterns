@@ -32,12 +32,11 @@ public class PlayerDeck
             return;
         }
 
-        Cards.Add(UnoCard.GenerateSuperCard());
         _generator = generator;
 
         for (int i = 0; i < initialCardCount; i++)
         {
-            UnoCard card = UnoCard.GenerateCard();
+            UnoCard card = _generator.GenerateRandomCard();
             Cards.Add(card);
         }
     }
