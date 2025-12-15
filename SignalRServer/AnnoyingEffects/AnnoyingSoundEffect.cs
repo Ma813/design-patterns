@@ -4,20 +4,22 @@ namespace SignalRServer.AnnoyingEffects;
 
 public class AnnoyingSoundEffect : IAnnoyingEffects
 {
-    private static SoundEffectAdaptee? _adaptee;
+private readonly ISoundEffect soundEffect;
 
-    public AnnoyingSoundEffect(SoundEffectAdaptee adaptee)
+    public AnnoyingSoundEffect()
     {
-        _adaptee = adaptee;
+        soundEffect =
+            new SoundEffectProxy(
+                new RealSoundEffect());
     }
 
     public async Task Annoy(IClientProxy player, IClientProxy caller, string playerUsername = "", string callerUsername = "")
     {
-        if (_adaptee == null)
+        if (soundEffect == null)
         {
             throw new InvalidOperationException("SoundEffectAdaptee is not initialized.");
         }
-        await _adaptee.SendSoundEffect(player, caller, playerUsername, callerUsername);
+        await soundEffect.SendSoundEffect(player, caller, playerUsername, callerUsername);
     }
 
     public async Task AnnoyAll(Dictionary<string, IClientProxy> players, IClientProxy caller, string callerUsername = "")
