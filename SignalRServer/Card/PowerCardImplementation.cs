@@ -24,24 +24,29 @@ public class PowerCardImplementation : ICardImplementation
             case "Draw":
                 game.NextDrawCard();
                 break;
-            case "NewRule":
-                var strategies = new List<ICardPlacementStrategy>
-            {
-                new AdjacentNumberPlacementStrategy(),
-                new ColorOnlyPlacementStrategy(),
-                new NumberOnlyPlacementStrategy(),
-                new UnoPlacementStrategy()
-            };
+            case "RestoreHand":
+                RestorePlayerHand(game);
+                break;
+        }
+    }
+    private void RestorePlayerHand(AbstractGame game)
+    {
+        if (game.PlayerDecks.Count == 0)
+            return;
 
-            var random = new Random();
-            int index = random.Next(strategies.Count);
+        var player = game.PlayerDecks[game.CurrentPlayerIndex];
+        bool restored = player.RestoreLastTurnState();
+        if (!restored)
+        {
+            return;
+        }
+        var restoreCard = player.Cards
+            .OfType<PowerCard>()
+            .FirstOrDefault(c => c.PowerType == "RestoreHand");
 
-            var randomStrategy = strategies[index];
-
-            Console.WriteLine($"New random placement strategy: {randomStrategy.GetType().Name}");
-
-            game.SetPlacementStrategy(randomStrategy);
-            break;
+        if (restoreCard != null)
+        {
+            player.RemoveCard(restoreCard);
         }
     }
 

@@ -19,7 +19,7 @@ public class DrawCardCommand : Command
         pd.Cards.Add(newCard);
 
         card = newCard;
-
+        
         game.NotifyAll(Action.draw, card);
 
         return true;

@@ -23,7 +23,7 @@ public sealed class SuperCardGenerator : CardGenerator
     protected override UnoCard GeneratePowerCard()
     {
         string color = PossibleColors[RNG.Next(PossibleColors.Count)];
-        string[] power = { "Skip", "Draw" };
+        string[] power = { "Skip", "Draw","RestoreHand" };
         string powerType = power[RNG.Next(power.Length)];
 
         return new PowerCard(color, powerType);
