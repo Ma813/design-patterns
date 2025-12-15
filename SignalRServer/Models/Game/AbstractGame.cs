@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.SignalR;
 using SignalRServer.Card;
 using SignalRServer.Models.CardPlacementStrategies;
 using SignalRServer.Models.Commands;
+using SignalRServer.Models.Game.States;
 using SignalRServer.Models.Iterator;
 using SignalRServer.Models.ThemeFactories;
 
@@ -20,6 +21,9 @@ public abstract class AbstractGame : ISubject
     public List<IBotClientPrototype> Bots { get; set; } = [];
     public readonly CardGenerator Generator;
 
+    // Add state management
+    private IGameState _currentState;
+
     // TODO: see if changing this from protected to public causes any issues
     public ICardPlacementStrategy CardPlacementStrategy { get; set; }
     public IUnoThemeFactory ThemeFactory { get; set; }
@@ -31,7 +35,7 @@ public abstract class AbstractGame : ISubject
     public List<ICardPlayValidator> validation = new List<ICardPlayValidator>{
         new NullValidator(), new TurnValidator(), new CardOwnershipValidator(), new PlacementStrategyValidator()};
 
-    protected AbstractGame(string roomName)
+    protected AbstractGame(string roomName = "DefaultRoom")
     {
         RoomName = roomName;
         PlayerDecks = [];
@@ -49,6 +53,8 @@ public abstract class AbstractGame : ISubject
         // set up validation chain
         for(int i = 0; i < validation.Count - 1; i++) validation[i].SetNext(validation[i+1]);
         validation[validation.Count - 1].SetNext(null);
+
+        _currentState = new InactiveState();
     }
 
     public ICardPlacementStrategy GetPlacementStrategy()
@@ -108,12 +114,17 @@ public abstract class AbstractGame : ISubject
         IsStarted = true;
         foreach (var player in Players)
         {
-            PlayerDeck deck = new(player.Value, client: clients?.Client(player.Key));
+            PlayerDeck deck = new(player.Value, Generator, client: clients?.Client(player.Key));
             PlayerDecks.Add(deck);
         }
         
         // *** INITIALIZE TURN ITERATOR ***
         InitializeTurnIterator();
+
+        if (_currentState is LobbyState)
+        {
+            TransitionToState(new PlayingState());
+        }
     }
 
     public abstract void End();
@@ -184,5 +195,105 @@ public abstract class AbstractGame : ISubject
             NextPlayer(Action.place);
         }
         return "OK";
+    }
+
+    public void TransitionToState(IGameState newState)
+    {
+        if (_currentState.CanTransitionTo(newState))
+        {
+            Console.WriteLine($"[{RoomName}] State transition: {_currentState.GetStateName()} -> {newState.GetStateName()}");
+            _currentState = newState;
+        }
+        else
+        {
+            Console.WriteLine($"[{RoomName}] Invalid state transition attempted: {_currentState.GetStateName()} -> {newState.GetStateName()}");
+        }
+    }
+    
+    public string GetCurrentStateName() => _currentState.GetStateName();
+    
+    public IGameState GetCurrentState() => _currentState;
+    
+    // State-based wrapper methods
+    public async Task<string> JoinRoomWithState(string userName, string connectionId)
+    {
+        var result = await _currentState.HandleJoinRoom(this, userName, connectionId);
+        
+        // Handle state transitions
+        if (_currentState is InactiveState && Players.Count > 0)
+        {
+            TransitionToState(new LobbyState());
+        }
+        
+        return result;
+    }
+    
+    public async Task<string> StartGameWithState()
+    {
+        var result = await _currentState.HandleStartGame(this);
+        
+        Console.WriteLine($"[{RoomName}] StartGameWithState result: {result}, Current state: {_currentState.GetStateName()}");
+        
+        // Handle state transitions
+        if (result == "OK" && _currentState is LobbyState)
+        {
+            TransitionToState(new PlayingState());
+        }
+        else if (result == "Ready for new game" && _currentState is GameOverState)
+        {
+            TransitionToState(new LobbyState());
+            Console.WriteLine($"[{RoomName}] Game reset complete, now in lobby state");
+        }
+        
+        return result;
+    }
+    
+    public async Task<string> DrawCardWithState(string userName)
+    {
+        return await _currentState.HandleDrawCard(this, userName);
+    }
+    
+    public async Task<string> PlayCardWithState(string userName, int cardIndex)
+    {
+        var result = await _currentState.HandlePlayCard(this, userName, cardIndex);
+        
+        // Handle state transitions
+        if (result == "WIN")
+        {
+            TransitionToState(new GameOverState());
+            Console.WriteLine($"[{RoomName}] Game ended, transitioning to GameOver state");
+        }
+        
+        return result;
+    }
+    
+    // Add method to properly reset game state
+    public void ResetGameState()
+    {
+        Console.WriteLine($"[{RoomName}] Resetting game state");
+        
+        // Clear game data but keep players
+        var playerUsernames = Players.Values.ToList();
+        var playerConnections = Players.Keys.ToList();
+        
+        // Reset game state
+        PlayerDecks.Clear();
+        CurrentPlayerIndex = 0;
+        IsStarted = false;
+        
+        // Keep players for next game
+        Players.Clear();
+        for (int i = 0; i < playerUsernames.Count; i++)
+        {
+            Players[playerConnections[i]] = playerUsernames[i];
+        }
+        
+        Console.WriteLine($"[{RoomName}] Game reset complete. Players retained: {Players.Count}");
+    }
+    
+    // Add method to check current state type
+    public bool IsInState<T>() where T : IGameState
+    {
+        return _currentState is T;
     }
 }

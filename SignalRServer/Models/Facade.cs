@@ -57,7 +57,6 @@ public class Facade
     {
         var connectionId = Context.ConnectionId;
 
-
         // Remove user from previous room if any
         if (UserRooms.ContainsKey(connectionId))
         {
@@ -70,7 +69,10 @@ public class Facade
         }
 
         AbstractGame game;
-        if (Games.ContainsKey(roomName)) game = Games[roomName];
+        if (Games.ContainsKey(roomName)) 
+        {
+            game = Games[roomName];
+        }
         else
         {
             game = gameFactory.CreateGame(gameMode, roomName);
@@ -79,7 +81,15 @@ public class Facade
 
         UsernameToConnectionId[userName] = connectionId;
 
+        // Use state-based join validation
+        string stateResult = await game.JoinRoomWithState(userName, connectionId);
+        if (stateResult.Contains("already") || stateResult.Contains("Cannot"))
+        {
+            await Clients.Caller.SendAsync("Error", stateResult);
+            return;
+        }
 
+        // Your existing placement strategy logic
         ICardPlacementStrategy strategy = cardPlacementStrategy switch
         {
             "AdjacentNumberPlacementStrategy" => new AdjacentNumberPlacementStrategy(),
@@ -95,25 +105,15 @@ public class Facade
             _ => new ClassicThemeFactory()
         };
 
-        //  Set strategy on the game. If this isn't called or compatible, the strategy will be the standard Uno rule
         game.SetPlacementStrategy(strategy);
-        if (game.Players.Count == 0) game.ThemeFactory = themeFactory;
-
-        if (game.IsStarted)
-        {
-            return; //Should return an errror later on
-        }
-
-        game.Players[Context.ConnectionId] = userName;
+        if (game.Players.Count == 1) game.ThemeFactory = themeFactory; // First player sets theme
 
         // Add user to new room
         UserRooms[connectionId] = roomName;
         await Groups.AddToGroupAsync(connectionId, roomName);
 
-        // Send only the array of usernames to the group, not the full dictionary
+        // Your existing bot logic
         var usernames = game.Players.Values.ToArray();
-
-        // Add bots
         if (botAmount > 0)
         {
             string botName = game.AddFirstBot();
@@ -128,11 +128,14 @@ public class Facade
         }
 
         await Clients.Group(roomName).SendAsync("UserJoined", usernames);
+        await Clients.Group(roomName).SendAsync("GameStateChanged", game.GetCurrentStateName());
+        
         SystemMessages.UserJoined(game, connectionId, userName, roomName, Clients).Wait();
 
-        // Message into the chat, that a new player joined
-        if (_systemColleagues.TryGetValue(roomName, out var systemColleague)) await systemColleague.AnnouncePlayerJoined(userName);
+        if (_systemColleagues.TryGetValue(roomName, out var systemColleague)) 
+            await systemColleague.AnnouncePlayerJoined(userName);
 
+        // Your existing theme logic
         var themeInfo = new
         {
             cardDesign = game.ThemeFactory.CreateCardDesign().GetDesignInfo(),
@@ -144,19 +147,77 @@ public class Facade
 
     public async Task StartGame(string roomName, string userName, IHubCallerClients? Clients, string connectionId = "bot")
     {
+        Console.WriteLine($"[{roomName}] StartGame called by {userName}");
+        
         AbstractGame game = Games[roomName];
-        game.Start(Clients);
-
-        foreach (var player in game.Players)
+        
+        Console.WriteLine($"[{roomName}] Current game state before start: {game.GetCurrentStateName()}");
+        
+        // Check state before starting
+        string stateResult = await game.StartGameWithState();
+        
+        Console.WriteLine($"[{roomName}] State result: {stateResult}");
+        
+        if (stateResult.Contains("Need") || stateResult.Contains("Cannot"))
         {
-            GameForSending gameForSeding = new GameForSending(game, player.Value);
-            await Clients.Client(player.Key).SendAsync("GameStarted", gameForSeding);
+            if (Clients != null)
+            {
+                await Clients.Caller.SendAsync("Error", stateResult);
+            }
+            Console.WriteLine($"[{roomName}] StartGame failed: {stateResult}");
+            return;
         }
+        
+        // Handle the case where we're coming from GameOver state
+        if (stateResult == "Ready for new game")
+        {
+            Console.WriteLine($"[{roomName}] Game was reset, now in {game.GetCurrentStateName()} state");
+            
+            // Try starting again now that we're in lobby state
+            stateResult = await game.StartGameWithState();
+            Console.WriteLine($"[{roomName}] Second start attempt result: {stateResult}");
+            
+            if (stateResult != "OK")
+            {
+                if (Clients != null)
+                {
+                    await Clients.Caller.SendAsync("Error", stateResult);
+                }
+                return;
+            }
+        }
+        
+        // Only proceed if we got OK or if we successfully transitioned
+        if (stateResult == "OK" || game.GetCurrentStateName() == "Playing")
+        {
+            Console.WriteLine($"[{roomName}] Starting game logic, current state: {game.GetCurrentStateName()}");
+            
+            // Your existing start game logic
+            game.Start(Clients);
 
-        await SetupChatMediator(roomName, game, Clients);
+            foreach (var player in game.Players)
+            {
+                GameForSending gameForSeding = new GameForSending(game, player.Value);
+                await Clients.Client(player.Key).SendAsync("GameStarted", gameForSeding);
+            }
 
-        SystemMessages.GameStarted(game, userName, connectionId, Clients).Wait();
-        if (_systemColleagues.TryGetValue(roomName, out var systemColleague)) await systemColleague.AnnounceGameStarted();
+            await SetupChatMediator(roomName, game, Clients);
+
+            SystemMessages.GameStarted(game, userName, connectionId, Clients).Wait();
+            if (_systemColleagues.TryGetValue(roomName, out var systemColleague)) 
+                await systemColleague.AnnounceGameStarted();
+            
+            await Clients.Group(roomName).SendAsync("GameStateChanged", game.GetCurrentStateName());
+            Console.WriteLine($"[{roomName}] Game started successfully");
+        }
+        else
+        {
+            Console.WriteLine($"[{roomName}] Unexpected state result: {stateResult}");
+            if (Clients != null)
+            {
+                await Clients.Caller.SendAsync("Error", "Failed to start game");
+            }
+        }
     }
 
     public async Task<string> DrawCard(string roomName, string userName, IHubCallerClients<IClientProxy>? Clients, string connectionId = "bot")
@@ -167,9 +228,17 @@ public class Facade
         }
 
         AbstractGame game = Games[roomName];
-        game.DrawCard(userName);
+        
+        // Use state-based draw validation
+        string stateResult = await game.DrawCardWithState(userName);
+        if (stateResult != "OK")
+        {
+            await Clients.Caller.SendAsync("Error", stateResult);
+            return stateResult;
+        }
+        
+        // Your existing logic
         SystemMessages.CardDrawn(game, userName, connectionId, Clients).Wait();
-
         await notifyPlayers(game);
         return "OK";
     }
@@ -183,38 +252,53 @@ public class Facade
 
         AbstractGame game = Games[roomName];
 
-        var playerDeck = game.PlayerDecks.FirstOrDefault(pd => pd.Username == userName);
-        if (playerDeck == null)
+        // Use state-based play validation
+        string stateResult = await game.PlayCardWithState(userName, cardIndex);
+        
+        if (stateResult == "Player not found")
         {
             await Clients.Caller.SendAsync("Error", "Player not found");
             return "Error: Player not found";
         }
-
-        string result = game.PlayCard(userName, playerDeck.Cards[cardIndex]);
-        if (result == "WIN")
+        
+        if (stateResult == "WIN")
         {
             SystemMessages.CardPlayed(game, userName, connectionId, Clients, true).Wait();
-
-            // announce winner in the messages
-            if (_systemColleagues.TryGetValue(roomName, out var systemColleague)) await systemColleague.AnnounceWinner(userName);
-
+            if (_systemColleagues.TryGetValue(roomName, out var systemColleague)) 
+                await systemColleague.AnnounceWinner(userName);
             await _hubContext.Clients.Group(roomName).SendAsync("GameEnded", $"{userName} has won the game!");
+            await _hubContext.Clients.Group(roomName).SendAsync("GameStateChanged", game.GetCurrentStateName());
             return "WIN";
         }
-        if (result != "OK")
+        
+        if (stateResult != "OK")
         {
-            await Clients.Caller.SendAsync("Error", result);
-            return "Error: " + result;
+            await Clients.Caller.SendAsync("Error", stateResult);
+            return "Error: " + stateResult;
         }
+        
+        // Your existing success logic
         SystemMessages.CardPlayed(game, userName, connectionId, Clients, false).Wait();
-
-        if(playerDeck.Cards.Count == 1)
+        
+        var playerDeck = game.PlayerDecks.FirstOrDefault(pd => pd.Username == userName);
+        if(playerDeck?.Cards.Count == 1)
         {
-            if (_systemColleagues.TryGetValue(roomName, out var systemColleague)) await systemColleague.AnnounceUnoCall(userName);
+            if (_systemColleagues.TryGetValue(roomName, out var systemColleague)) 
+                await systemColleague.AnnounceUnoCall(userName);
         }
 
         await notifyPlayers(game);
         return "OK";
+    }
+
+    // Add new method to get game state
+    public string GetGameState(string roomName)
+    {
+        if (Games.ContainsKey(roomName))
+        {
+            return Games[roomName].GetCurrentStateName();
+        }
+        return "Room not found";
     }
 
     public async Task UndoCard(string roomName, string userName, IHubCallerClients<IClientProxy>? Clients)
