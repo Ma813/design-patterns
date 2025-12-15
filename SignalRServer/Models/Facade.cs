@@ -14,6 +14,7 @@ using SignalRServer.Models.Chat.Colleagues;
 using SignalRServer.Models.Game;
 using SignalRServer.Models.ThemeFactories;
 using SignalRServer.Visitors;
+using SignalRServer.Logging;
 
 namespace SignalRServer.Models;
 
@@ -47,6 +48,8 @@ public class Facade
 
     private readonly Dictionary<string, SystemColleague> _systemColleagues = new();
 
+    private readonly LoggingChain _loggingChain = new LoggingChain();
+
     public Facade(IHubContext<PlayerHub> hubContext)
     {
         _hubContext = hubContext;
@@ -55,6 +58,7 @@ public class Facade
 
     public async Task JoinRoom(string roomName, string userName, IHubCallerClients Clients, HubCallerContext Context, IGroupManager Groups, int botAmount = 0, string gameMode = "Classic", string cardPlacementStrategy = "UnoPlacementStrategy", string theme = "Classic")
     {
+        _loggingChain.Log(LogLevelCustom.Info, $"Player {userName} attempting to join room {roomName}", "RoomManager");
         var connectionId = Context.ConnectionId;
 
         // Remove user from previous room if any
@@ -85,6 +89,7 @@ public class Facade
         string stateResult = await game.JoinRoomWithState(userName, connectionId);
         if (stateResult.Contains("already") || stateResult.Contains("Cannot"))
         {
+            _loggingChain.Log(LogLevelCustom.Error, $"Failed to create or join room {roomName} for player {userName}", "RoomManager");
             await Clients.Caller.SendAsync("Error", stateResult);
             return;
         }
